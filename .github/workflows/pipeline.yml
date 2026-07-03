@@ -1,0 +1,38 @@
+name: pipeline
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+concurrency:
+  group: pipeline-worker
+  cancel-in-progress: false
+
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: setup
+        run: |
+          pip install --quiet google-api-python-client google-auth
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: run
+        env:
+          DRIVE_ROOT_FOLDER_ID: ${{ secrets.DRIVE_ROOT_FOLDER_ID }}
+          DRIVE_CLIENT_ID:      ${{ secrets.DRIVE_CLIENT_ID }}
+          DRIVE_CLIENT_SECRET:  ${{ secrets.DRIVE_CLIENT_SECRET }}
+          DRIVE_REFRESH_TOKEN:  ${{ secrets.DRIVE_REFRESH_TOKEN }}
+          YT_CLIENT_ID:         ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET:     ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN:     ${{ secrets.YT_REFRESH_TOKEN }}
+          ACE_API_KEY:          ${{ secrets.ACE_API_KEY }}
+        run: python worker.py
