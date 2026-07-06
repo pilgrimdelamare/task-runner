@@ -21,6 +21,16 @@ MIN_AUDIO_DURATION = 60
 PLAYLIST_CAP       = 5000
 TIME_BUDGET_S      = 35 * 60
 
+GENRES = [
+    {"name": "electro-swing",  "vocal_language": "en", "ace_duration": 190},
+    {"name": "rock",           "vocal_language": "en", "ace_duration": 190},
+    {"name": "pop",            "vocal_language": "en", "ace_duration": 190},
+    {"name": "k-pop",          "vocal_language": "ko", "ace_duration": 120},
+    {"name": "lofi-chillout",  "vocal_language": "en", "ace_duration": 190},
+]
+
+GEMINI_MODEL = "gemini-3.1-flash-lite"
+
 
 def get_drive_service():
     from google.oauth2.credentials import Credentials
@@ -311,7 +321,638 @@ def mark_yt_quota_exhausted(drive, queue_folder_id):
     write_json(drive, {"reset_after": reset_after.isoformat()}, "yt_quota.json", queue_folder_id)
 
 
-def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta):
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GENERAZIONE TESTO (replicato da agents/text_agent.py)
+# ─────────────────────────────────────────────────────────────────────────────
+
+TEXT_MOODS = {
+    "electro-swing":  ["upbeat", "playful", "jazzy", "nostalgic", "energetic"],
+    "rock":           ["powerful", "intense", "rebellious", "melancholic", "anthemic"],
+    "pop":            ["happy", "romantic", "danceable", "emotional", "catchy"],
+    "k-pop":          ["cute", "fierce", "dreamy", "powerful", "trendy"],
+    "lofi-chillout":  ["relaxed", "nostalgic", "melancholic", "cozy", "peaceful"],
+}
+
+TEXT_IMAGE_BASE = {
+    "electro-swing": (
+        "warm amber and sepia tones, art deco aesthetic, cinematic grain, "
+        "soft vignette, vintage film photography, high contrast chiaroscuro"
+    ),
+    "rock": (
+        "high contrast, dramatic harsh shadows, desaturated palette with strong accent colors, "
+        "gritty raw texture, dark cinematic atmosphere, moody tonal range"
+    ),
+    "pop": (
+        "vivid saturated colors, bright dynamic lighting, clean commercial aesthetic, "
+        "sharp hyperrealistic photography, modern glossy finish"
+    ),
+    "k-pop": (
+        "ethereal soft lighting, pastel and neon color palette, ultra-clean finish, "
+        "dreamy cinematic atmosphere, hyperrealistic, elegant Korean commercial aesthetic"
+    ),
+    "lofi-chillout": (
+        "muted warm tones, soft analog film grain, low-key intimate lighting, "
+        "vintage texture, hazy atmospheric depth, cozy lo-fi aesthetic"
+    ),
+}
+
+ELECTRO_SWING_VARIANTS = [
+    (
+        "Genre: Sensual Electro Swing / Club Neo-Swing. "
+        "Instrumentation: Deep pulsing synth bass fused with jazz double bass, "
+        "four-on-the-floor electronic kick drum, crisp sampled finger snaps on the beat, "
+        "sensual gritty brass section with syncopated riffs, club piano chords, modern synth accents. "
+        "Rhythm: Super danceable 130-135 BPM, seductive glamorous luxurious atmosphere, "
+        "exclusive club lit by warm lights where vintage meets house music. "
+        "Structure: Theatrical elegant spoken intro, whispered verses building tension, "
+        "explosive high-energy drop choruses with vocal choirs and brass riffs, "
+        "brief rhythmic pauses with only finger snaps and kick before the final drop."
+    ),
+    (
+        "Genre: Cinematic Electro Swing / Spy-Jazz / Neo-Swing. "
+        "Instrumentation: Bold cinematic brass section (trumpets and trombones) with James Bond-style riffs, "
+        "walking syncopated double bass, modern drum machine with sharp claps and open hi-hats, "
+        "dramatic orchestral string inserts for tension. "
+        "Rhythm: Energetic bouncy 132 BPM, ironic mysterious adventurous atmosphere, "
+        "1960s spy soundtrack meets modern wild club track. "
+        "Structure: Theatrical spoken intro with radio noise and comic quotes, tight groove verses, "
+        "explosive brass-led choruses, alternating fake-suspense moments and overwhelming dance drops, "
+        "chaotic exuberant finale."
+    ),
+    (
+        "Genre: Modern Electro Swing / High-Energy Neo-Swing. "
+        "Instrumentation: Blaring aggressive brass led by solo trumpets and trombones, "
+        "powerful four-on-the-floor electronic kick drum, rhythmic bouncy slap bass, "
+        "syncopated jazz piano accents, swing guitar hints. "
+        "Rhythm: Fast overwhelming danceable 132 BPM, "
+        "chaotic smoky vintage night party with modern energetic production. "
+        "Structure: Alternating brass-led instrumental sections and tight groove verses, "
+        "powerful drops where kick meets trumpet riffs, "
+        "energetic raspy charismatic vocals in modern crooner style."
+    ),
+    (
+        "Genre: Fast Electro Swing / Quirky Swing-House. "
+        "Instrumentation: Frantic rhythm section with driving electronic kick and extremely bouncy slap double bass, "
+        "brass (trumpets and saxophones) with staccato punchy rhythmic riffs "
+        "alternating with vocal samples and playful sound effects, "
+        "fast honky-tonk piano and tight hi-hat. "
+        "Rhythm: Very fast syncopated 130-135 BPM, ironic sarcastic theatrical quirky atmosphere, "
+        "dynamic dance challenge full of charisma and geometric moves. "
+        "Structure: Theatrical spoken voice intro, tight groove verses with one-two step rhythm, "
+        "explosive instrumental drops with sharp brass and ultra-high-energy club atmosphere."
+    ),
+    (
+        "Genre: Dark Electro Swing / Vintage Gangster Jazz / Speakeasy Swing. "
+        "Instrumentation: Dark rich brass section with muted trumpets, smoky saxophones and deep trombones "
+        "performing mysterious Prohibition-era 1930s melodies, "
+        "deep groovy bass line (synth or double bass), vintage jazz piano samples, "
+        "modern mid-tempo electronic beat with straight kick and clap. "
+        "Rhythm: Fast driving tempo, smoky shady cinematic suspenseful atmosphere yet strongly danceable, "
+        "underground illegal speakeasy with gangster stories, mystery and retro elegance. "
+        "Structure: Atmospheric intro with vintage brass riffs, narrative verses building tension, "
+        "massive explosive drop choruses driven by a wall of tight brass."
+    ),
+    (
+        "Genre: High-Octane Electro Swing / Vintage Club Dance. "
+        "Instrumentation: Overwhelming unhinged brass section with extremely high trumpets and roaring trombones, "
+        "very deep hammering synth bass line, rhythmic syncopated jazz piano, "
+        "modern energetic dance drum kit with heavily marked open hi-hats pushing the groove. "
+        "Rhythm: Fast wild tempo, shameless ironic chaotic euphoric atmosphere, "
+        "sweaty dance night in a retro venue where classic elegance collides "
+        "with raw energy and rebellious attitude of contemporary electronic music. "
+        "Structure: Theatrical ironic spoken opening, driving verses with tight groove, "
+        "explosive choruses with brass solos and riffs pushed to the limit."
+    ),
+]
+
+KPOP_VARIANTS = [
+    (
+        "Viral K-Pop Dance Challenge track, 125 BPM, high-energy, infectious, extremely catchy. "
+        "Modern slap bassline, aggressive electronic claps, punchy kick drum, and a quirky, memorable "
+        "synth whistle riff. Minimalist but driving structure. Sassy female vocals with an easy, "
+        "repetitive hook (\"chant\") designed for a viral dance routine. Sudden explosive beat drop."
+    ),
+    (
+        "2014 Summer K-Pop, Sistar style, 120 BPM, extremely catchy, bright, sunny, flirtatious "
+        "feel-good vibe. Driving hip-hop inspired drum beat, funky sub-bassline, bouncy synth plucks, "
+        "and a signature, highly addictive brass saxophone hook that repeats throughout the song. "
+        "Upbeat and infectious pool party atmosphere. Sassy and confident female vocals, combining a "
+        "rhythmic and playful \"talking\" flow in the verses with powerful, soulful belting and bubbly "
+        "group chants in a massive, melodic chorus."
+    ),
+    (
+        "K-Pop EDM Anthem, PSY style, 132 BPM, explosive, high-energy, comedic, highly addictive, "
+        "viral party vibe. Massive pulsating Electro-House synthesizer lead riff, heavy four-on-the-floor "
+        "kick drum, rolling sub-bass, and sharp electronic claps. Rowdy, anthemic festival atmosphere. "
+        "Energetic, charismatic male vocals, combining a fast rhythmic rap-talking flow in the verses "
+        "with loud, shouted vocal chants (\"hey!\", \"go!\") leading into a massive, booming "
+        "stadium-status instrumental drop."
+    ),
+    (
+        "Powerful K-Pop Girl Crush, Jennie style, 105 BPM, dark, heavy, hypnotic, absolute swagger, "
+        "fashion runway attitude. Deep pulsing sub-bass 808, crisp modern hip-hop drum kit with heavy "
+        "claps, minimalist but sharp synth stabs, and subtle futuristic glitch effects. Sassy, confident "
+        "female vocals switching between a fast, sharp rhythmic rap flow in the verses and an ultra-catchy, "
+        "repetitive, and chant-like melodic chorus. High-energy, bold, and luxurious underground club atmosphere."
+    ),
+    (
+        "Bright K-Pop Boyhood Pop, TWS style, 130 BPM, up-tempo, youthful, fresh, highly energetic, "
+        "innocent feel-good vibe. Driving synth-pop bassline, crisp acoustic pop drums, bright piano chords, "
+        "and shimmering synthesizer plucks. Uplifting and nostalgic high school anime opening atmosphere. "
+        "Clean, youthful, and sweet male vocals with clear melodic verses, group chants "
+        "(\"one, two, three, go!\"), and highly layered, airy harmonies in a triumphant, soaring chorus."
+    ),
+]
+
+POP_VARIANTS = [
+    (
+        "Dramatic Synth-Pop, Taylor Swift style, 112 BPM, mid-tempo, cinematic, elegant, melancholic "
+        "yet powerful storytelling vibe. Pulsing electronic synth bassline, crisp modern pop percussion, "
+        "combined with rich, sweeping orchestral string arrangements and subtle piano chords. Sophisticated "
+        "and theatrical atmosphere. Expressive, smooth female vocals, starting with intimate, clear verses "
+        "that build tension, exploding into a grand, layered, and deeply emotional melodic chorus with "
+        "soaring vocal harmonies."
+    ),
+    (
+        "Upbeat Indie-Pop, modern Bedroom Pop, 105 BPM, bright, breezy, sunny, highly infectious "
+        "feel-good vibe. Groovy acoustic guitar strumming, plucky electric guitar riffs, warm melodic "
+        "bassline, and a crisp, punchy pop drum kit with handclaps. Playful and romantic late-summer "
+        "atmosphere. Casual, charismatic male vocals with rhythmic, fast-paced verses that transition "
+        "smoothly into a highly repetitive, sweet, and ultra-catchy melodic chorus with layered vocal harmonies."
+    ),
+    (
+        "Melodic EDM-Pop, 103 BPM, mid-tempo, emotional, uplifting, anthemic, bittersweet festival vibe. "
+        "Gentle organic piano chords and soft ambient synth pads in the verses, building tension with "
+        "automated filter sweeps and sharp electronic claps. The track explodes into a bright, pulsing "
+        "electronic synthesizer lead drop with a warm, driving bassline and a heavy four-on-the-floor kick "
+        "drum. Nostalgic and cinematic atmosphere. Clean, expressive, and melancholic male vocals with clear "
+        "storytelling lyrics, rising into a soaring, layered vocal harmony just before a massive, "
+        "melodic instrumental drop."
+    ),
+    (
+        "Modern Tropical House, Synth-Pop, 116 BPM, mid-tempo, empowering, moody yet danceable, cool "
+        "confident vibe. Minimalist and deep sub-bassline, steady electronic pop drum beat, layered with a "
+        "prominent plucked marimba-style synth riff and sharp digital claps that build tension. Sleek, "
+        "commanding, and smooth female vocals, delivering rhythmic storytelling in the verses, rising through "
+        "a layered pre-chorus, and dropping into a highly repetitive, hypnotic, and infectious vocal-chopped "
+        "synth chorus. Sophisticated, tropical-pop club atmosphere."
+    ),
+    (
+        "Nu-Disco, Retro Synth-Pop, 120 BPM, mid-tempo, bright, breezy, flirtatious, effortless feel-good "
+        "vibe. Driving and infectious slap funk bassline, rhythmic muted electric guitar strums, crisp "
+        "electro-pop drum kit with a steady four-on-the-floor kick, and soft shimmering synthesizer chords "
+        "in the background. Sassy, confident, and smooth female vocals, combining playful conversational "
+        "rhythmic verses with a highly repetitive, hypnotic, and catchy melodic chorus. Sunny, chic, and "
+        "breezy summer pool party atmosphere."
+    ),
+    (
+        "High-octane EDM Festival Anthem, Electropop, 128 BPM, aggressive, commanding, powerful, "
+        "high-intensity workout vibe. Loud heavy four-on-the-floor electronic kick drum, sharp grinding "
+        "sawtooth synthesizer riffs, and massive digital filter sweeps that build intense cinematic tension "
+        "before exploding. Fierce, confident female vocals delivering spoken-word rhythmic commands, list-like "
+        "lyrics, and sharp repetitive punchlines. Pounding club music production with frantic percussion "
+        "build-ups, lasers, and a giant, earth-shaking electronic bass drop that demands movement."
+    ),
+]
+
+TEXT_BPM_RANGE = {
+    "electro-swing":  (130, 140),
+    "rock":           (100, 160),
+    "pop":            (90,  130),
+    "k-pop":          (90,  135),
+    "lofi-chillout":  (65,   90),
+}
+
+
+def generate_text(genre: str, vocal_language: str) -> dict | None:
+    """Genera metadati canzone via Gemini. Replicato da agents/text_agent.py."""
+    import random, re, json as _json
+    try:
+        from google import genai as _genai
+    except ImportError:
+        logger.error("google-genai non installato")
+        return None
+
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    if not api_key:
+        logger.error("GEMINI_API_KEY mancante")
+        return None
+    client = _genai.Client(api_key=api_key)
+
+    avoid_ctx = (
+        '\n\nDo NOT use the word "velvet" (or "velvety"/"velveteen") anywhere in the '
+        "title, lyrics, caption, or description.\n"
+    )
+    moods_list  = ", ".join(TEXT_MOODS.get(genre, ["upbeat"]))
+    image_base  = TEXT_IMAGE_BASE.get(genre, "")
+    is_new      = not image_base
+
+    if is_new:
+        image_style_field = (
+            '  "image_style": "Visual aesthetic for this genre: color palette, lighting style, '
+            'rendering technique, atmosphere. 60-90 chars. NO subjects, NO scenes.",\n'
+        )
+        image_prompt_instr = (
+            "For image_prompt: cinematic album cover scene inspired by title, mood, and lyrics. "
+            "Use the image_style you generated as visual guide. 100-150 chars. NO text, NO logos."
+        )
+    else:
+        image_style_field = ""
+        image_prompt_instr = (
+            f"For image_prompt: cinematic album cover scene inspired by title, mood, and lyrics. "
+            f"Visual style: {image_base}. 100-150 chars. NO text, NO logos."
+        )
+
+    _preset = None
+    if genre == "electro-swing":
+        _preset = random.choice(ELECTRO_SWING_VARIANTS)
+        genre_hint = (
+            f"\nProduction style (use it for title/lyrics/mood — do NOT put it in caption, "
+            f"just write 'see preset'):\n{_preset}\n"
+        )
+    elif genre == "k-pop":
+        _preset = random.choice(KPOP_VARIANTS)
+        genre_hint = (
+            f"\nProduction style (use it for title/lyrics/mood — do NOT put it in caption, "
+            f"just write 'see preset'):\n{_preset}\n"
+            f"\nIMPORTANT for lyrics: dense syllable-packed lines. "
+            f"Mandatory structure: [Verse] 4 lines, [Pre-Chorus] 3 lines, [Chorus] 4 lines, "
+            f"[Verse 2] 3 lines, [Bridge] 2 lines, [Outro] 2 lines.\n"
+            f"\nIMPORTANT for title: bilingual — Korean script first, English in parentheses "
+            f"(e.g. \"한여름의 꿈 (Midsummer Dream)\"). Never English-only.\n"
+        )
+    elif genre == "pop":
+        _preset = random.choice(POP_VARIANTS)
+        genre_hint = (
+            f"\nProduction style (use it for title/lyrics/mood — do NOT put it in caption, "
+            f"just write 'see preset'):\n{_preset}\n"
+        )
+    else:
+        genre_hint = ""
+
+    bpm_min, bpm_max = TEXT_BPM_RANGE.get(genre, (80, 160))
+
+    prompt = (
+        f"Create an original {genre} song. Respond ONLY with valid JSON, no markdown.\n\n"
+        f"Requirements:\n"
+        f"- Vocal language: {vocal_language}\n"
+        f"- Genre: {genre}\n"
+        f"- Available moods: {moods_list}\n"
+        f"- BPM: choose between {bpm_min} and {bpm_max}\n"
+        f"{genre_hint}{avoid_ctx}\n"
+        f"{image_prompt_instr}\n\n"
+        f'JSON structure:\n{{\n'
+        f'  "title": "Song title (max 80 chars)",\n'
+        f'  "caption": "Music production style for AI generation (300-500 chars)",\n'
+        f'  "lyrics": "[Verse]\\nLine 1\\nLine 2\\n\\n[Chorus]\\nLine 1\\nLine 2\\n\\n'
+        f'[Verse 2]\\nLine 1\\nLine 2\\n\\n[Bridge]\\nLine 1\\n\\n[Outro]\\nLine 1",\n'
+        f'  "bpm": 120,\n'
+        f'  "key_scale": "C Major",\n'
+        f'  "vocal_language": "{vocal_language}",\n'
+        f'  "mood": "one mood from the list",\n'
+        f'  "description": "YouTube SEO description 150-300 chars, no hashtags",\n'
+        f'  "tags": ["tag1","tag2","tag3","tag4","tag5","tag6","tag7","tag8"],\n'
+        f'{image_style_field}'
+        f'  "image_prompt": "cinematic album cover scene"\n'
+        f'}}'
+    )
+
+    for attempt in range(5):
+        try:
+            resp  = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+            raw   = resp.text.strip()
+            clean = re.sub(r"^```(?:json)?\n?", "", raw)
+            clean = re.sub(r"\n?```$", "", clean).strip()
+            data  = _json.loads(clean)
+            if _preset:
+                data["caption"] = _preset
+            return data
+        except _json.JSONDecodeError as e:
+            logger.warning(f"generate_text [{genre}] JSON non valido (tentativo {attempt+1}): {e}")
+        except Exception as e:
+            err = str(e)
+            if "429" in err or "quota" in err.lower():
+                wait = 2 ** attempt * 5
+                logger.warning(f"generate_text [{genre}] quota, attendo {wait}s")
+                time.sleep(wait)
+            elif "503" in err or "unavailable" in err.lower():
+                logger.warning(f"generate_text [{genre}] 503, retry in 10s")
+                time.sleep(10)
+            else:
+                logger.error(f"generate_text [{genre}]: {e}")
+                break
+    logger.error(f"generate_text [{genre}]: fallito dopo 5 tentativi")
+    return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# GENERAZIONE IMMAGINE (replicato da agents/image_agent.py)
+# ─────────────────────────────────────────────────────────────────────────────
+
+IMG_GENRE_STYLES = {
+    "electro-swing": (
+        "1930s jazz club interior, art deco architecture, warm amber stage lighting, "
+        "brass instruments on stage, elegant dancers in vintage attire, atmospheric smoke, "
+        "cinematic film photography, hyperrealistic, no visible faces"
+    ),
+    "rock": (
+        "dark arena concert stage, massive crowd silhouettes, dramatic colored spotlights "
+        "cutting through fog, electric guitar silhouette backlit, raw powerful energy, "
+        "cinematic rock concert photography, moody atmosphere"
+    ),
+    "pop": (
+        "glamorous rooftop party at golden hour, city skyline glowing at dusk, "
+        "colorful confetti falling, vibrant neon signs reflecting on glass, "
+        "cinematic concert photography, euphoric atmosphere, ultra hyperrealistic"
+    ),
+    "k-pop": (
+        "Seoul cityscape at night, neon reflections on wet pavement, cherry blossom trees "
+        "with pink LED lights, futuristic Korean street aesthetic, ethereal purple and pink "
+        "atmosphere, cinematic hyperrealistic photography"
+    ),
+    "lofi-chillout": (
+        "cozy bedroom desk at rainy window, warm lamp glow, vinyl record player, "
+        "stack of books and coffee mug, soft hazy bokeh, muted warm tones, "
+        "analog film grain, intimate lo-fi atmosphere, hyperrealistic"
+    ),
+}
+
+IMG_CF_ENDPOINT = (
+    "https://api.cloudflare.com/client/v4/accounts/{account_id}"
+    "/ai/run/@cf/black-forest-labs/flux-1-schnell"
+)
+IMG_MS_ENDPOINT      = "https://api-inference.modelscope.cn/v1/images/generations"
+IMG_MS_TASK_ENDPOINT = "https://api-inference.modelscope.cn/v1/tasks/{task_id}"
+IMG_MS_MODELS        = ["Tongyi-MAI/Z-Image-Turbo", "Qwen/Qwen-Image-2512"]
+IMG_HF_SPACES = [
+    {
+        "space_id": "AP123/SDXL-Lightning",
+        "api_name": "/generate_image",
+        "args": lambda p: [p, "4-Step"],
+    },
+    {
+        "space_id": "stabilityai/stable-diffusion-3-medium",
+        "api_name": "/infer",
+        "args": lambda p: [p, "text watermark logo letters", 0, 7.0, 1344, 768, True],
+    },
+]
+
+
+def generate_image(genre: str, mood: str, title: str, image_prompt: str = None) -> bytes | None:
+    """Genera copertina album. Replicato da agents/image_agent.py."""
+    prompt_text = _img_build_prompt(genre, mood, image_prompt)
+    ms_token = os.environ.get("MODELSCOPE_TOKEN", "")
+    if ms_token:
+        for model_id in IMG_MS_MODELS:
+            img = _img_from_modelscope(model_id, prompt_text, ms_token)
+            if img:
+                return img
+        logger.warning("ModelScope fallito — provo Cloudflare FLUX")
+    else:
+        logger.warning("MODELSCOPE_TOKEN mancante — salto ModelScope")
+
+    img = _img_from_cloudflare(prompt_text)
+    if img:
+        return img
+
+    logger.warning("Cloudflare fallito — provo HF Spaces")
+    for space_cfg in IMG_HF_SPACES:
+        img = _img_from_hf_space(
+            space_cfg["space_id"], space_cfg["api_name"], space_cfg["args"](prompt_text)
+        )
+        if img:
+            return img
+
+    logger.error("Tutti i provider immagine falliti")
+    return None
+
+
+def _img_build_prompt(genre: str, mood: str, image_prompt: str = None) -> str:
+    base = image_prompt or IMG_GENRE_STYLES.get(genre, "cinematic abstract music artwork, vibrant colors")
+    return (
+        f"{base}, {mood} mood, "
+        "ultra high quality, cinematic widescreen 16:9, "
+        "NO text, NO letters, NO watermarks, NO logos"
+    )
+
+
+def _img_from_modelscope(model_id: str, prompt_text: str, token: str) -> bytes | None:
+    import json as _json, urllib.request as _ur, urllib.error as _ue
+    short   = model_id.split("/")[-1]
+    payload = _json.dumps({"model": model_id, "prompt": prompt_text, "n": 1, "size": "1344x768"}).encode()
+    req = _ur.Request(IMG_MS_ENDPOINT, data=payload,
+                      headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                      method="POST")
+    try:
+        with _ur.urlopen(req, timeout=120) as resp:
+            body = _json.loads(resp.read())
+        items = body.get("data") or body.get("images") or []
+        if items:
+            return _img_extract_ms(items[0], short)
+        task_id = body.get("task_id") or body.get("id")
+        if task_id:
+            return _img_poll_ms(task_id, token, short)
+        logger.warning(f"ModelScope {short}: risposta inattesa")
+        return None
+    except _ue.HTTPError as e:
+        logger.warning(f"ModelScope {short} HTTP {e.code}")
+        return None
+    except Exception as e:
+        logger.warning(f"ModelScope {short}: {e}")
+        return None
+
+
+def _img_poll_ms(task_id: str, token: str, label: str) -> bytes | None:
+    import json as _json, urllib.request as _ur
+    url = IMG_MS_TASK_ENDPOINT.format(task_id=task_id)
+    deadline, interval = time.time() + 120, 3
+    while time.time() < deadline:
+        time.sleep(interval)
+        interval = min(interval * 1.5, 15)
+        try:
+            req = _ur.Request(url, headers={"Authorization": f"Bearer {token}"})
+            with _ur.urlopen(req, timeout=30) as resp:
+                body = _json.loads(resp.read())
+        except Exception as e:
+            logger.warning(f"ModelScope poll {label}: {e}")
+            continue
+        status = body.get("status", "")
+        if status in ("succeeded", "completed"):
+            items = body.get("output", {}).get("data") or body.get("data") or []
+            return _img_extract_ms(items[0], label) if items else None
+        if status in ("failed", "error"):
+            logger.warning(f"ModelScope {label}: task fallito")
+            return None
+    logger.warning(f"ModelScope {label}: timeout")
+    return None
+
+
+def _img_extract_ms(item: dict, label: str) -> bytes | None:
+    import base64 as _b64
+    if "b64_json" in item:
+        try:
+            data = _b64.b64decode(item["b64_json"])
+            if len(data) > 10_000:
+                logger.info(f"ModelScope {label}: OK {len(data)//1024}KB")
+                return data
+        except Exception as e:
+            logger.warning(f"ModelScope {label} b64: {e}")
+        return None
+    if "url" in item:
+        return _img_download_url(item["url"], label)
+    return None
+
+
+def _img_from_cloudflare(prompt_text: str) -> bytes | None:
+    import json as _json, base64 as _b64, urllib.request as _ur, urllib.error as _ue
+    token      = os.environ.get("CLOUDFLARE_TOKEN", "")
+    account_id = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
+    if not token or not account_id:
+        logger.warning("Cloudflare: credenziali mancanti")
+        return None
+    url     = IMG_CF_ENDPOINT.format(account_id=account_id)
+    payload = _json.dumps({"prompt": prompt_text, "width": 1344, "height": 768, "num_steps": 8}).encode()
+    req = _ur.Request(url, data=payload,
+                      headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                      method="POST")
+    try:
+        with _ur.urlopen(req, timeout=120) as resp:
+            ct   = resp.headers.get("Content-Type", "")
+            data = resp.read()
+        if "image/" in ct and len(data) > 10_000:
+            logger.info(f"Cloudflare FLUX: OK {len(data)//1024}KB")
+            return data
+        try:
+            body = _json.loads(data)
+            img  = _b64.b64decode(body["result"]["image"])
+            if len(img) > 10_000:
+                return img
+        except Exception:
+            pass
+        logger.warning("Cloudflare: risposta non valida")
+        return None
+    except _ue.HTTPError as e:
+        logger.warning(f"Cloudflare HTTP {e.code}")
+        return None
+    except Exception as e:
+        logger.warning(f"Cloudflare: {e}")
+        return None
+
+
+def _img_from_hf_space(space_id: str, api_name: str, args: list) -> bytes | None:
+    try:
+        from gradio_client import Client
+    except ImportError:
+        logger.warning("gradio_client non installato")
+        return None
+    try:
+        c      = Client(space_id, verbose=False)
+        result = c.predict(*args, api_name=api_name)
+    except Exception as e:
+        logger.warning(f"HF Space {space_id}: {e}")
+        return None
+    if isinstance(result, (list, tuple)):
+        result = result[0]
+    if isinstance(result, str) and os.path.isfile(result):
+        try:
+            data = open(result, "rb").read()
+            os.remove(result)
+            if len(data) > 10_000:
+                logger.info(f"HF Space {space_id}: OK {len(data)//1024}KB")
+                return data
+        except Exception as e:
+            logger.warning(f"HF Space {space_id}: {e}")
+    return None
+
+
+def _img_download_url(url: str, label: str) -> bytes | None:
+    import urllib.request as _ur
+    try:
+        with _ur.urlopen(url, timeout=60) as r:
+            data = r.read()
+        if len(data) > 10_000:
+            return data
+    except Exception as e:
+        logger.warning(f"{label} download URL: {e}")
+    return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VALIDAZIONE (replicato da core/validator.py)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def validate_text(data: dict) -> tuple:
+    if not isinstance(data, dict):
+        return False, "non un dict"
+    for f in ("title", "caption", "lyrics", "bpm", "key_scale", "vocal_language",
+              "description", "tags", "mood"):
+        if not data.get(f):
+            return False, f"campo mancante: {f}"
+    bpm = data.get("bpm")
+    if not isinstance(bpm, int) or not (60 <= bpm <= 200):
+        return False, f"bpm non valido: {bpm}"
+    if not any(s in data.get("lyrics", "") for s in ("[Verse]", "[Chorus]")):
+        return False, "lyrics senza [Verse]/[Chorus]"
+    if not isinstance(data.get("tags"), list) or len(data["tags"]) < 3:
+        return False, "tags insufficienti"
+    return True, ""
+
+
+def validate_image(img_bytes: bytes) -> tuple:
+    if not img_bytes or len(img_bytes) < 1024:
+        return False, "immagine vuota o troppo piccola"
+    if not (img_bytes[:2] == b"\xff\xd8" or img_bytes[:4] == b"\x89PNG"):
+        return False, "header immagine non valido"
+    return True, ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PIPELINE FULL (testo + immagine + audio + video + upload, tutto cloud)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: list | None = None):
+    genres = [g for g in GENRES if not genre_names or g["name"] in genre_names]
+    start  = time.time()
+    done, failed = 0, 0
+    for genre_cfg in genres:
+        for _ in range(count):
+            if time.time() - start > TIME_BUDGET_S:
+                logger.info("budget tempo esaurito")
+                return done, failed
+            genre = genre_cfg["name"]
+            try:
+                logger.info(f"{genre}: genera testo")
+                meta = generate_text(genre, genre_cfg["vocal_language"])
+                if not meta:
+                    failed += 1; continue
+                ok, reason = validate_text(meta)
+                if not ok:
+                    logger.error(f"{genre}: testo non valido ({reason})")
+                    failed += 1; continue
+
+                logger.info(f"{genre}: genera immagine — {meta['title']}")
+                img_bytes = generate_image(genre, meta.get("mood", ""), meta["title"],
+                                           meta.get("image_prompt"))
+                if not img_bytes:
+                    failed += 1; continue
+                ok, reason = validate_image(img_bytes)
+                if not ok:
+                    logger.error(f"{genre}: immagine non valida ({reason})")
+                    failed += 1; continue
+
+                meta["genre"]          = genre
+                meta["vocal_language"] = genre_cfg["vocal_language"]
+                item_id = f"cloud_{int(time.time())}_{genre}"
+                process_item(drive, yt, root_folder_id, None, item_id, meta,
+                             cover_bytes=img_bytes)
+                done += 1
+            except Exception as e:
+                logger.error(f"{genre}: {e}")
+                failed += 1
+    return done, failed
+
+def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta, cover_bytes=None):
     genre = meta["genre"]
     workdir = Path(f"work_{item_id}")
     workdir.mkdir(exist_ok=True)
@@ -327,10 +968,13 @@ def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta)
         audio_path.write_bytes(audio_bytes)
 
         cover_path = workdir / "cover.jpg"
-        cover_file_id = find_file(drive, f"{item_id}.jpg", processing_folder_id)
-        if not cover_file_id:
-            raise RuntimeError("copertina mancante in coda")
-        download_file(drive, cover_file_id, str(cover_path))
+        if cover_bytes:
+            cover_path.write_bytes(cover_bytes)
+        else:
+            cover_file_id = find_file(drive, f"{item_id}.jpg", processing_folder_id)
+            if not cover_file_id:
+                raise RuntimeError("copertina mancante in coda")
+            download_file(drive, cover_file_id, str(cover_path))
 
         logger.info(f"{item_id}: render")
         video_path = workdir / "output.mp4"
@@ -368,9 +1012,19 @@ def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta)
 
 def main():
     root_folder_id = os.environ["DRIVE_ROOT_FOLDER_ID"]
-    drive = get_drive_service()
-    yt = get_youtube_service()
+    mode  = os.environ.get("PIPELINE_MODE", "worker")
+    count = int(os.environ.get("PIPELINE_COUNT", "1"))
 
+    drive = get_drive_service()
+    yt    = get_youtube_service()
+
+    if mode == "full":
+        logger.info(f"Modalità full: {count} canzoni per genere")
+        done, failed = full_pipeline_run(drive, yt, root_folder_id, count)
+        logger.info(f"Pipeline full: {done} ok, {failed} fallite")
+        return
+
+    # ── Modalità worker (default): processa coda Drive ────────────────────────
     queue_folder = get_or_create_folder(drive, "_queue", root_folder_id)
     pending_folder = get_or_create_folder(drive, "pending", queue_folder)
     processing_folder = get_or_create_folder(drive, "processing", queue_folder)
