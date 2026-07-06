@@ -128,6 +128,23 @@ def write_json(drive, data, filename, folder_id):
         drive.files().create(body=meta, media_body=media, fields="id").execute()
 
 
+_progress_folder_cache: dict = {}
+
+def set_progress(drive, root_folder_id: str, step: str, detail: str):
+    """Aggiorna _queue/pipeline_progress.json — letto dalla dashboard ogni 5s."""
+    try:
+        if root_folder_id not in _progress_folder_cache:
+            _progress_folder_cache[root_folder_id] = get_or_create_folder(drive, "_queue", root_folder_id)
+        write_json(drive, {
+            "run_id":     os.environ.get("GITHUB_RUN_ID", ""),
+            "step":       step,
+            "detail":     detail,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }, "pipeline_progress.json", _progress_folder_cache[root_folder_id])
+    except Exception as e:
+        logger.warning(f"set_progress: {e}")
+
+
 def generate_audio(caption, lyrics, bpm, key_scale, vocal_language, duration=190):
     api_key = os.environ["ACE_API_KEY"]
     content = f"<prompt>{caption}</prompt>\n<lyrics>{lyrics}</lyrics>"
@@ -922,6 +939,7 @@ def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: l
                 return done, failed
             genre = genre_cfg["name"]
             try:
+                set_progress(drive, root_folder_id, "text", f"Testo — {genre}")
                 logger.info(f"{genre}: genera testo")
                 meta = generate_text(genre, genre_cfg["vocal_language"])
                 if not meta:
@@ -931,6 +949,7 @@ def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: l
                     logger.error(f"{genre}: testo non valido ({reason})")
                     failed += 1; continue
 
+                set_progress(drive, root_folder_id, "image", f"Immagine — {meta['title']} ({genre})")
                 logger.info(f"{genre}: genera immagine — {meta['title']}")
                 img_bytes = generate_image(genre, meta.get("mood", ""), meta["title"],
                                            meta.get("image_prompt"))
@@ -957,6 +976,7 @@ def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta,
     workdir = Path(f"work_{item_id}")
     workdir.mkdir(exist_ok=True)
     try:
+        set_progress(drive, root_folder_id, "audio", f"ACE Music — {meta['title']}")
         logger.info(f"{item_id}: audio")
         audio_bytes = generate_audio(
             caption=meta["caption"], lyrics=meta["lyrics"], bpm=meta["bpm"],
@@ -976,6 +996,7 @@ def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta,
                 raise RuntimeError("copertina mancante in coda")
             download_file(drive, cover_file_id, str(cover_path))
 
+        set_progress(drive, root_folder_id, "ffmpeg", f"Rendering video — {meta['title']}")
         logger.info(f"{item_id}: render")
         video_path = workdir / "output.mp4"
         r = subprocess.run(
@@ -1003,9 +1024,11 @@ def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta,
         if dry_run:
             logger.info(f"{item_id}: [dry_run] skip upload YouTube")
             return
+        set_progress(drive, root_folder_id, "upload", f"Upload YouTube — {meta['title']}")
         result = upload_video(yt, str(video_path), yt_title, yt_desc, tags, playlist_id=playlist_id)
         meta["youtube_url"] = result["youtube_url"]
 
+        set_progress(drive, root_folder_id, "archive", f"Archiviando su Drive — {meta['title']}")
         logger.info(f"{item_id}: archivio")
         archive_song(drive, root_folder_id, meta, str(audio_path), str(cover_path), str(video_path))
         logger.info(f"{item_id}: ok {result['youtube_url']}")
@@ -1061,6 +1084,7 @@ def main():
         logger.info(f"Modalità full: {count} canzoni per genere")
         done, failed = full_pipeline_run(drive, yt, root_folder_id, count, dry_run=dry_run)
         logger.info(f"Pipeline full: {done} ok, {failed} fallite")
+        set_progress(drive, root_folder_id, "done", f"Completato: {done} ok, {failed} fallite")
         if continuous and not dry_run:
             _redispatch_if_no_stop_flag(root_folder_id)
         return
