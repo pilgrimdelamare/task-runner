@@ -6,13 +6,21 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "full (testo+immagine+audio+video+upload) oppure worker (solo coda Drive)"
+        description: "full (genera da zero) oppure worker (consuma coda Drive)"
         required: false
         default: "worker"
       count:
         description: "canzoni per genere (solo mode=full)"
         required: false
         default: "1"
+      continuous:
+        description: "true = re-dispatch al termine finche stop flag assente"
+        required: false
+        default: "false"
+      dry_run:
+        description: "true = esegue tutto tranne upload e archivio Drive"
+        required: false
+        default: "false"
 
 concurrency:
   group: pipeline-worker
@@ -50,4 +58,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           PIPELINE_MODE:         ${{ github.event.inputs.mode || 'worker' }}
           PIPELINE_COUNT:        ${{ github.event.inputs.count || '1' }}
+          PIPELINE_CONTINUOUS:   ${{ github.event.inputs.continuous || 'false' }}
+          PIPELINE_DRY_RUN:      ${{ github.event.inputs.dry_run || 'false' }}
+          GH_TOKEN:              ${{ secrets.GITHUB_TOKEN }}
         run: python worker.py
