@@ -281,8 +281,14 @@ def build_tags(genre, mood, bpm, key_scale, title, existing_tags):
 
 
 def build_title(genre, title, suffix=None):
-    base = f"{title} - {genre.title()}"
-    base += f" | {suffix}" if suffix else " | Majesty Music"
+    brand = suffix or "Majesty Music"
+    genre_variants = {genre.lower(), genre.lower().replace("-", " ")}
+    title_lower = title.lower()
+    already_has_genre = any(v in title_lower for v in genre_variants)
+    if already_has_genre:
+        base = f"{title} | {brand}"
+    else:
+        base = f"{title} - {genre.title()} | {brand}"
     return base[:100]
 
 
@@ -358,15 +364,20 @@ TEXT_IMAGE_BASE = {
     ),
     "rock": (
         "high contrast, dramatic harsh shadows, desaturated palette with strong accent colors, "
-        "gritty raw texture, dark cinematic atmosphere, moody tonal range"
+        "gritty raw texture, dark cinematic atmosphere, moody tonal range, "
+        "industrial cyberpunk alleyways, dark stage lights, "
+        "NO generic electric guitars, focus on atmospheric scenery"
     ),
     "pop": (
         "vivid saturated colors, bright dynamic lighting, clean commercial aesthetic, "
         "sharp hyperrealistic photography, modern glossy finish"
     ),
     "k-pop": (
-        "ethereal soft lighting, pastel and neon color palette, ultra-clean finish, "
-        "dreamy cinematic atmosphere, hyperrealistic, elegant Korean commercial aesthetic"
+        "glossy K-pop idol-photoshoot lighting and color grading, ethereal soft lighting, "
+        "vivid pastel-and-neon color palette, ultra-clean high-fashion finish, "
+        "dreamy cinematic atmosphere, polished Korean commercial album-teaser aesthetic, "
+        "stylized graphic design layout, vector-like album art frames, minimal clean aesthetic, "
+        "NO full-body human figures"
     ),
     "lofi-chillout": (
         "muted warm tones, soft analog film grain, low-key intimate lighting, "
@@ -541,6 +552,11 @@ TEXT_BPM_RANGE = {
     "lofi-chillout":  (65,   90),
 }
 
+TEXT_BANNED_WORDS = [
+    "velvet", "velvety", "velveteen", "neon", "midnight", "gilded",
+    "clockwork", "echoes", "horizon", "marquee", "syndicate", "clove",
+]
+
 
 def generate_text(genre: str, vocal_language: str) -> dict | None:
     """Genera metadati canzone via Gemini. Replicato da agents/text_agent.py."""
@@ -558,8 +574,9 @@ def generate_text(genre: str, vocal_language: str) -> dict | None:
     client = _genai.Client(api_key=api_key)
 
     avoid_ctx = (
-        '\n\nDo NOT use the word "velvet" (or "velvety"/"velveteen") anywhere in the '
-        "title, lyrics, caption, or description.\n"
+        "\n\nDo NOT use any of these overused AI words anywhere in the title, lyrics, "
+        "caption, or description: " + ", ".join(TEXT_BANNED_WORDS) +
+        " — find fresh, organic, and unexpected words or imagery.\n"
     )
     moods_list  = ", ".join(TEXT_MOODS.get(genre, ["upbeat"]))
     image_base  = TEXT_IMAGE_BASE.get(genre, "")
@@ -596,8 +613,13 @@ def generate_text(genre: str, vocal_language: str) -> dict | None:
             f"\nIMPORTANT for lyrics: dense syllable-packed lines. "
             f"Mandatory structure: [Verse] 4 lines, [Pre-Chorus] 3 lines, [Chorus] 4 lines, "
             f"[Verse 2] 3 lines, [Bridge] 2 lines, [Outro] 2 lines.\n"
-            f"\nIMPORTANT for title: bilingual — Korean script first, English in parentheses "
-            f"(e.g. \"한여름의 꿈 (Midsummer Dream)\"). Never English-only.\n"
+            f"\nIMPORTANT for title: COMPLETELY IGNORE the generic title format instruction below "
+            f"(no mood prefix, no use-case, no extra descriptive words). "
+            f"The title field must contain EXACTLY two parts and nothing else: "
+            f"English Title (Korean Translation) — one short English title, one pair of "
+            f"parentheses, one Korean translation inside. Example: \"Midsummer Dream (한여름의 꿈)\". "
+            f"Do NOT nest extra parentheses, do NOT add subtitles, do NOT prepend mood/use-case text. "
+            f"English always first, never Korean-only or Korean-first.\n"
         )
     elif genre == "pop":
         _preset = random.choice(POP_VARIANTS)
@@ -620,7 +642,7 @@ def generate_text(genre: str, vocal_language: str) -> dict | None:
         f"{genre_hint}{avoid_ctx}\n"
         f"{image_prompt_instr}\n\n"
         f'JSON structure:\n{{\n'
-        f'  "title": "Song title (max 80 chars)",\n'
+        f'  "title": "A YouTube-optimized title (max 70 chars). Format: [Emotional Mood or Intended Use-Case] + [Music Style/Vibe] + (Short Creative Title). Examples based on genre: For Rock: \'Aggressive Cyberpunk Rock Beat for Gaming (Shattered Circuits)\'; For Electro-Swing: \'1920s Electro Swing Dance Vibes (Copper Carousel)\'; For Pop: \'Retro Synthwave Pop for Night Drives (Static Heartbeat)\'; For Lofi: \'Cozy Lofi Chillout Beats to Study/Relax (Rainy Window Coffee)\'. Do NOT just return a poetic title. It must contain the musical vibe or use-case first.",\n'
         f'  "caption": "Music production style for AI generation (300-500 chars)",\n'
         f'  "lyrics": "[Verse]\\nLine 1\\nLine 2\\n\\n[Chorus]\\nLine 1\\nLine 2\\n\\n'
         f'[Verse 2]\\nLine 1\\nLine 2\\n\\n[Bridge]\\nLine 1\\n\\n[Outro]\\nLine 1",\n'
@@ -675,8 +697,9 @@ IMG_GENRE_STYLES = {
     ),
     "rock": (
         "dark arena concert stage, massive crowd silhouettes, dramatic colored spotlights "
-        "cutting through fog, electric guitar silhouette backlit, raw powerful energy, "
-        "cinematic rock concert photography, moody atmosphere"
+        "cutting through fog, raw powerful energy, industrial cyberpunk alleyways, "
+        "dark stage lights, cinematic rock concert photography, moody atmosphere, "
+        "NO generic electric guitars, focus on atmospheric scenery"
     ),
     "pop": (
         "glamorous rooftop party at golden hour, city skyline glowing at dusk, "
@@ -686,7 +709,8 @@ IMG_GENRE_STYLES = {
     "k-pop": (
         "Seoul cityscape at night, neon reflections on wet pavement, cherry blossom trees "
         "with pink LED lights, futuristic Korean street aesthetic, ethereal purple and pink "
-        "atmosphere, cinematic hyperrealistic photography"
+        "atmosphere, cinematic hyperrealistic photography, "
+        "NO full-body human figures"
     ),
     "lofi-chillout": (
         "cozy bedroom desk at rainy window, warm lamp glow, vinyl record player, "
