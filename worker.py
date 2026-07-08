@@ -613,13 +613,14 @@ def generate_text(genre: str, vocal_language: str) -> dict | None:
             f"\nIMPORTANT for lyrics: dense syllable-packed lines. "
             f"Mandatory structure: [Verse] 4 lines, [Pre-Chorus] 3 lines, [Chorus] 4 lines, "
             f"[Verse 2] 3 lines, [Bridge] 2 lines, [Outro] 2 lines.\n"
-            f"\nIMPORTANT for title: COMPLETELY IGNORE the generic title format instruction below "
-            f"(no mood prefix, no use-case, no extra descriptive words). "
-            f"The title field must contain EXACTLY two parts and nothing else: "
-            f"English Title (Korean Translation) — one short English title, one pair of "
-            f"parentheses, one Korean translation inside. Example: \"Midsummer Dream (한여름의 꿈)\". "
-            f"Do NOT nest extra parentheses, do NOT add subtitles, do NOT prepend mood/use-case text. "
-            f"English always first, never Korean-only or Korean-first.\n"
+            f"\nIMPORTANT for title: follow the generic title format below "
+            f"([Emotional Mood or Intended Use-Case] + [Music Style/Vibe] + Creative Title), "
+            f"but the Creative Title part must be bilingual, written as a SINGLE pair of "
+            f"parentheses containing the English title, a colon, then the Korean translation — "
+            f"e.g. \"Fresh Youthful K-Pop Vibe (Sun Splash: 태양의 파도)\". "
+            f"Do NOT nest extra parentheses inside, do NOT add a second pair of parentheses. "
+            f"English words always before Korean words within that one parenthetical, "
+            f"never Korean-first or Korean-only.\n"
         )
     elif genre == "pop":
         _preset = random.choice(POP_VARIANTS)
