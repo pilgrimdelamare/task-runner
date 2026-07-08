@@ -298,7 +298,17 @@ def build_description(title, genre, mood, bpm, key_scale, base_description, tags
     def clean_tag(tag):
         return re.sub(r"[^a-zA-Z0-9가-힣]", "", tag.replace(" ", ""))
 
-    hashtags = " ".join(f"#{clean_tag(t)}" for t in tags[:15])
+    seen_hashtags = set()
+    hashtag_list  = []
+    for t in tags:
+        clean = clean_tag(t)
+        norm  = clean.lower()
+        if clean and norm not in seen_hashtags:
+            seen_hashtags.add(norm)
+            hashtag_list.append(clean)
+        if len(hashtag_list) >= 15:
+            break
+    hashtags = " ".join(f"#{h}" for h in hashtag_list)
     return (
         f"{base_description}\n\n"
         f"Genre: {genre.title()} | Mood: {mood.title()} | BPM: {bpm} | Key: {key_scale}\n\n"
