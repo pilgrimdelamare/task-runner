@@ -967,8 +967,8 @@ def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: l
     genres = [g for g in GENRES if not genre_names or g["name"] in genre_names]
     start  = time.time()
     done, failed = 0, 0
-    for genre_cfg in genres:
-        for _ in range(count):
+    for _ in range(count):
+        for genre_cfg in genres:
             if time.time() - start > TIME_BUDGET_S:
                 logger.info("budget tempo esaurito")
                 return done, failed
