@@ -930,8 +930,8 @@ def generate_text(genre: str, vocal_language: str) -> dict | None:
         _preset = ELECTRO_SWING_VARIANTS[_es_idx]
         _title_usecase = random.choice(ELECTRO_SWING_TITLE_USECASES[_es_idx])
         genre_hint = (
-        genre_hint = (
             f"\nProduction style (use it for title/lyrics/mood — do NOT put it in caption, "
+            f"just write 'see preset'):\n{_preset}\n"
             f"\nSuggested title [Mood/Use-Case] prefix: '{_title_usecase}' — use it as the starting part of the title, adapting it to the production style above.\n"
         )
     elif genre == "k-pop":
