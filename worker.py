@@ -170,6 +170,39 @@ def generate_audio(caption, lyrics, bpm, key_scale, vocal_language, duration=190
             logger.warning(f"ACE tentativo {attempt + 1}: {e}")
             if attempt < ACE_MAX_RETRIES - 1:
                 time.sleep(2 ** attempt * 5)
+    logger.warning("ACE API esaurita, provo fallback HF")
+    try:
+        result = _ace_call_hf(caption, lyrics, bpm, key_scale, vocal_language, duration)
+        if result:
+            dur = _ffprobe_duration(result)
+            if dur >= MIN_AUDIO_DURATION:
+                logger.info(f"HF fallback ok ({dur:.0f}s)")
+                return result
+            logger.warning(f"HF fallback: durata {dur:.0f}s troppo corta")
+    except Exception as e:
+        logger.warning(f"HF fallback: {e}")
+    return None
+
+
+def _ace_call_hf(caption, lyrics, bpm, key_scale, vocal_language, duration):
+    from gradio_client import Client
+    hf_token = os.environ.get("HF_TOKEN")
+    client = Client("ACE-Step/Ace-Step-v1.5", hf_token=hf_token)
+    result = client.predict(
+        caption, lyrics, int(bpm), key_scale, "", vocal_language,
+        8, 7.0, True, "-1", None, int(duration), 1, None,
+        "", 0.0, -1.0, "Fill the audio semantic mask...",
+        1.0, "text2music", False, 0.0, 1.0, 3.0, "ode",
+        "", "mp3", 0.85, True, 2.0, 0, 0.9,
+        "NO USER INPUT", True, True, True, False, True, False, False,
+        0.5, 8, "vocals", [], False,
+        api_name="/generation_wrapper",
+    )
+    audio_path = result[0] if isinstance(result, (list, tuple)) else result
+    if isinstance(audio_path, dict):
+        audio_path = audio_path.get("path") or audio_path.get("url")
+    if audio_path and Path(str(audio_path)).exists():
+        return Path(str(audio_path)).read_bytes()
     return None
 
 
