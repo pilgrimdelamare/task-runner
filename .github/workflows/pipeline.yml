@@ -21,6 +21,10 @@ on:
         description: "true = esegue tutto tranne upload e archivio Drive"
         required: false
         default: "false"
+      genres:
+        description: "generi da produrre, separati da virgola (vuoto = tutti, solo mode=full)"
+        required: false
+        default: ""
 
 concurrency:
   group: pipeline-worker
@@ -60,6 +64,7 @@ jobs:
           PIPELINE_COUNT:        ${{ github.event.inputs.count || '1' }}
           PIPELINE_CONTINUOUS:   ${{ github.event.inputs.continuous || 'false' }}
           PIPELINE_DRY_RUN:      ${{ github.event.inputs.dry_run || 'false' }}
+          PIPELINE_GENRES:       ${{ github.event.inputs.genres || '' }}
           GH_TOKEN:              ${{ secrets.GITHUB_TOKEN }}
           HF_TOKEN:              ${{ secrets.HF_TOKEN }}
         run: python worker.py
