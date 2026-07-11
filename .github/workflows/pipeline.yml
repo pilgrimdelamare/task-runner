@@ -61,4 +61,5 @@ jobs:
           PIPELINE_CONTINUOUS:   ${{ github.event.inputs.continuous || 'false' }}
           PIPELINE_DRY_RUN:      ${{ github.event.inputs.dry_run || 'false' }}
           GH_TOKEN:              ${{ secrets.GITHUB_TOKEN }}
+          HF_TOKEN:              ${{ secrets.HF_TOKEN }}
         run: python worker.py
