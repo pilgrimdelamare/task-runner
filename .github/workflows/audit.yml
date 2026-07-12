@@ -1,0 +1,155 @@
+name: audit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: setup
+        run: pip install --quiet google-api-python-client google-auth
+
+      - name: run
+        env:
+          DRIVE_ROOT_FOLDER_ID: ${{ secrets.DRIVE_ROOT_FOLDER_ID }}
+          DRIVE_CLIENT_ID: ${{ secrets.DRIVE_CLIENT_ID }}
+          DRIVE_CLIENT_SECRET: ${{ secrets.DRIVE_CLIENT_SECRET }}
+          DRIVE_REFRESH_TOKEN: ${{ secrets.DRIVE_REFRESH_TOKEN }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+        run: |
+          python - <<'PYEOF'
+          import os, json, re
+          from googleapiclient.discovery import build
+          from google.oauth2.credentials import Credentials
+          from google.auth.transport.requests import Request as GRequest
+
+          def get_drive():
+              creds = Credentials(
+                  token=None,
+                  refresh_token=os.environ["DRIVE_REFRESH_TOKEN"],
+                  client_id=os.environ["DRIVE_CLIENT_ID"],
+                  client_secret=os.environ["DRIVE_CLIENT_SECRET"],
+                  token_uri="https://oauth2.googleapis.com/token",
+                  scopes=["https://www.googleapis.com/auth/drive.file"],
+              )
+              creds.refresh(GRequest())
+              return build("drive", "v3", credentials=creds)
+
+          def get_yt():
+              creds = Credentials(
+                  token=None,
+                  refresh_token=os.environ["YT_REFRESH_TOKEN"],
+                  client_id=os.environ["YT_CLIENT_ID"],
+                  client_secret=os.environ["YT_CLIENT_SECRET"],
+                  token_uri="https://oauth2.googleapis.com/token",
+                  scopes=["https://www.googleapis.com/auth/youtube"],
+              )
+              creds.refresh(GRequest())
+              return build("youtube", "v3", credentials=creds)
+
+          def list_all(svc, parent_id):
+              items, token = [], None
+              while True:
+                  res = svc.files().list(
+                      q=f"'{parent_id}' in parents and trashed=false",
+                      fields="nextPageToken, files(id, name, mimeType)",
+                      pageToken=token, pageSize=200,
+                  ).execute()
+                  items.extend(res.get("files", []))
+                  token = res.get("nextPageToken")
+                  if not token:
+                      break
+              return items
+
+          def read_json_file(svc, folder_id, filename):
+              res = svc.files().list(
+                  q=f"name='{filename}' and trashed=false and '{folder_id}' in parents",
+                  fields="files(id)",
+              ).execute()
+              files = res.get("files", [])
+              if not files:
+                  return None, None
+              try:
+                  raw = svc.files().get_media(fileId=files[0]["id"]).execute()
+                  return json.loads(raw), files[0]["id"]
+              except Exception as e:
+                  return None, None
+
+          def list_playlist_videos(yt, pid):
+              out, token = [], None
+              while True:
+                  params = dict(part="snippet", playlistId=pid, maxResults=50)
+                  if token:
+                      params["pageToken"] = token
+                  res = yt.playlistItems().list(**params).execute()
+                  for item in res.get("items", []):
+                      sn = item["snippet"]
+                      vid = sn["resourceId"]["videoId"]
+                      out.append({"video_id": vid, "title": sn.get("title",""), "url": f"https://www.youtube.com/watch?v={vid}"})
+                  token = res.get("nextPageToken")
+                  if not token:
+                      break
+              return out
+
+          ROOT = os.environ["DRIVE_ROOT_FOLDER_ID"]
+          GENRES = ["electro-swing", "rock", "pop", "k-pop", "lofi-chillout"]
+
+          drive = get_drive()
+          yt = get_yt()
+
+          # Leggi tutte le playlist YT
+          url_to_title = {}
+          for genre in GENRES:
+              base = f"Majesty Music — {genre.title()}"
+              res = yt.playlists().list(part="snippet", mine=True, maxResults=50).execute()
+              for item in res.get("items", []):
+                  t = item["snippet"]["title"]
+                  if t == base or re.match(rf"^{re.escape(base)} Vol\.\d+$", t):
+                      for v in list_playlist_videos(yt, item["id"]):
+                          url_to_title[v["url"]] = v["title"]
+
+          # Census Drive
+          root_children = list_all(drive, ROOT)
+          genre_folder_ids = {
+              f["name"]: f["id"]
+              for f in root_children
+              if f["mimeType"] == "application/vnd.google-apps.folder" and f["name"] in GENRES
+          }
+
+          results = []
+          for genre, gid in genre_folder_ids.items():
+              date_folders = [f for f in list_all(drive, gid) if f["mimeType"] == "application/vnd.google-apps.folder"]
+              for df in sorted(date_folders, key=lambda x: x["name"]):
+                  meta, meta_fid = read_json_file(drive, df["id"], "metadata.json")
+                  if meta:
+                      entry = {
+                          "genre": genre, "date": df["name"],
+                          "folder_id": df["id"], "meta_file_id": meta_fid,
+                          "title": meta.get("title"), "youtube_url": meta.get("youtube_url"),
+                      }
+                  else:
+                      entry = {
+                          "genre": genre, "date": df["name"],
+                          "folder_id": df["id"], "meta_file_id": None,
+                          "title": None, "youtube_url": None,
+                      }
+                  url = entry.get("youtube_url")
+                  entry["yt_title"] = url_to_title.get(url) if url else None
+                  results.append(entry)
+                  print(f"{genre}/{df['name']}: title={entry['title']!r} url={url} yt={entry['yt_title']!r}", flush=True)
+
+          print("DRIVE_AUDIT_START", flush=True)
+          print(json.dumps(results, ensure_ascii=False), flush=True)
+          print("DRIVE_AUDIT_END", flush=True)
+          print(f"TOTALE: {len(results)} cartelle, {sum(1 for r in results if r['title'])} con metadata, {sum(1 for r in results if r['youtube_url'])} con URL", flush=True)
+          PYEOF
