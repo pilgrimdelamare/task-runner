@@ -498,6 +498,49 @@ ELECTRO_SWING_VARIANTS = [
         "Structure: Theatrical ironic spoken opening, driving verses with tight groove, "
         "explosive choruses with brass solos and riffs pushed to the limit."
     ),
+    (
+        "High-energy electro swing, electro house, electronic swing-step. Fast-tempo 128 BPM, "
+        "heavy driving 4/4 electronic club beat, deep thumping synth bassline. Prominent jazz acoustic "
+        "guitar strums, vintage brass section stabs, playful clarinet riffs, retro big band samples. "
+        "Sassy, energetic and rhythmic female vocals with a cheeky, casual talk-singing delivery and "
+        "occasional swing-style scatting. Infectious danceable house groove, chaotic yet polished "
+        "electronic production, retro vintage-meets-modern club atmosphere, explosive drop section."
+    ),
+    (
+        "Electro-Swing, High-energy melbourne bounce, aggressive electro house, bounce-step. "
+        "Fast-tempo 130 BPM, heavy thumping 4/4 electronic club beat, deep distorted rubbery synth "
+        "bassline. Playful vintage brass section stabs, retro big band horn samples, clicking digital "
+        "percussion. Sassy and energetic female vocals with a cheeky, casual nursery-rhyme talk-singing "
+        "delivery in the verses, leading to a frantic buildup. Explosive, chaotic and massive synth drop "
+        "with horn accents, infectious danceable club groove, ironic and celebratory mood, hyper-modern "
+        "electronic festival production."
+    ),
+    (
+        "Upbeat electro swing, electronic gypsy jazz, vintage house crossover. Fast-tempo 125 BPM, "
+        "solid 4/4 driving electronic house drum beat, deep grooving double bass line. Prominent snappy "
+        "brass section riffs, retro saxophone and trumpet hooks, rhythmic gypsy jazz acoustic guitar "
+        "strums. Polished electronic house production with a vintage big-band sample aesthetic, crisp "
+        "claps, bouncy digital percussion. Joyful, energetic, and celebratory club atmosphere, seamless "
+        "retro-meets-modern loop structure, infectious danceable retro groove."
+    ),
+    (
+        "High-energy retro-futuristic electro swing, synthwave jazz crossover, art deco electronic. "
+        "Upbeat 125 BPM, heavy driving 4/4 electronic club beat, deep pulsing synth bassline, snapping "
+        "digital claps. Vintage brass section stabs, aggressive trumpet and saxophone hooks, crackling "
+        "gramophone vinyl static effects, glowing synthesizer arpeggios. Charismatic, sassy and energetic "
+        "female vocals with a vintage 1930s jazz club delivery, switching to rhythmic anthemic sing-along "
+        "phrasing in the chorus. High-voltage, celebratory yet dark retro club atmosphere, explosive drop "
+        "sections, hyper-modern cinematic fusion production."
+    ),
+    (
+        "Electro Swing, High-energy boosted electro swing, modern club techno-jazz crossover, art deco "
+        "electronic. Upbeat 125 BPM, heavy 4/4 electronic house drum beat, loud deep thumping synth "
+        "bassline, crisp snapping digital claps. Vintage cabaret piano samples, energetic brass section "
+        "stabs, syncopated saloon piano chords, retro big band horn accents. Sassy, seductive and highly "
+        "energetic female vocals with a theatrical, casual storytelling delivery in the verses, switching "
+        "to a powerful melodic hook. High-voltage, festive and chaotic club atmosphere, explosive drop "
+        "section, hyper-modern electronic festival production, rich vocal ad-libs."
+    ),
 ]
 
 # Suggerimenti [Mood/Use-Case] per il titolo, coerenti con la variant musicale scelta.
@@ -814,6 +857,116 @@ ELECTRO_SWING_TITLE_USECASES = [
         "Rowdy Vintage Club Dance Track",
         "Frantic Retro Rave Swing Mix",
     ],
+    [  # 6 -- High-Energy Electro Swing / Electro House / Swing-Step
+        "High-Energy Electro Swing Rave",
+        "Sassy Swing-Step Club Anthem",
+        "Vintage Brass Meets Electronic House",
+        "Infectious Dance Floor Swing Mix",
+        "Retro Club Swing House Banger",
+        "Big Band Electro House Dance",
+        "Modern Swing Party Rave Mix",
+        "Danceable Vintage Club Electro",
+        "Swinging House Music Groove",
+        "Electro Swing for Dance Parties",
+        "Retro Rave House Swing Track",
+        "Festival-Ready Electro Swing Mix",
+        "Sassy Vintage Club House Groove",
+        "Jump and Swing Electro House",
+        "Chaotic Retro Dance Floor Hit",
+        "Jazz Drop Club Swing Track",
+        "Electro Swing for the Rave",
+        "Big Brass House Music Banger",
+        "High-Octane Swing Club Dance",
+        "Retro Jazz House Party Mix",
+    ],
+    [  # 7 -- Electro-Swing / Melbourne Bounce / Aggressive Electro House
+        "Melbourne Bounce Meets Swing Jazz",
+        "Aggressive Electro Swing Drop Mix",
+        "Bounce-Step Swing Club Anthem",
+        "Ironic Swing Party Bomb Drop",
+        "Nursery Rhyme Electro Swing Rave",
+        "Sassy Swing Bounce Club Mix",
+        "Chaotic Vintage Bounce Track",
+        "Massive Synth Drop Swing Mix",
+        "Festival Swing Bounce Banger",
+        "Retro Horn Bounce Club Dance",
+        "Celebratory Swing House Bomb",
+        "Cheeky Melbourne Swing Track",
+        "Big Room Swing Bounce Party",
+        "Electro Swing for the Festival",
+        "Hard-Hitting Vintage Bounce Mix",
+        "Playful Swing Bomb Drop Track",
+        "Horn-Led Bounce Club Swing",
+        "Swing Bounce for the Dance Floor",
+        "Explosive Retro Rave Bounce",
+        "Maximum Impact Swing House Mix",
+    ],
+    [  # 8 -- Upbeat Electro Swing / Gypsy Jazz / Vintage House Crossover
+        "Joyful Gypsy Jazz Electro Swing",
+        "Vintage House Gypsy Dance Mix",
+        "Celebratory Swing Jazz Club Track",
+        "Festive Retro Gypsy Swing Dance",
+        "Upbeat Gypsy Swing Party Mix",
+        "Jazz Caravan Electro Dance Track",
+        "Retro Gypsy Festival Swing Mix",
+        "Energetic Gypsy Jazz House Beat",
+        "Joyful Vintage Swing House Groove",
+        "Gypsy Jazz for Dance Parties",
+        "Accordion and Brass Club Dance",
+        "Bohemian Electro Swing Party",
+        "Swing Caravan Festival Dance Mix",
+        "European Gypsy Jazz Electro Mix",
+        "Wanderer Swing House Dance Track",
+        "Festive Street Swing Jazz Mix",
+        "Happy-Go-Lucky Gypsy Swing Mix",
+        "Swing Jazz Carnival Dance Groove",
+        "Sun-Soaked Gypsy Swing House",
+        "Retro Jazz Carnival Party Beat",
+    ],
+    [  # 9 -- Retro-Futuristic Electro Swing / Synthwave Jazz / Art Deco Electronic
+        "Art Deco Synthwave Swing Mix",
+        "Retro-Futuristic Jazz Club Dance",
+        "1930s Meets Cyberpunk Swing",
+        "Vintage Synthwave Electro Swing",
+        "Art Deco Club Night Swing Mix",
+        "Futuristic 1930s Jazz Dance Track",
+        "Dark Retro-Futuristic Swing Beat",
+        "Synthwave Jazz Party Groove",
+        "Art Deco Electro Swing Rave",
+        "Retro Gramophone Jazz Club Dance",
+        "Vintage Glitch Jazz Swing Mix",
+        "Gramophone Synthwave Swing Track",
+        "High-Voltage Art Deco Swing",
+        "Cinematic Retro-Future Jazz Dance",
+        "Synthwave Big Band Electro Mix",
+        "Futurist Swing Club Anthem",
+        "Retro-Electric Jazz Club Groove",
+        "Deco Meets Digital Swing Dance",
+        "Timeless Swing Synthwave Fusion",
+        "Electric 1930s Futurist Swing",
+    ],
+    [  # 10 -- Electro Swing / Boosted / Club Techno-Jazz / Art Deco
+        "Boosted Cabaret Swing Club Night",
+        "Theatrical Electro Swing Rave",
+        "Seductive Cabaret Jazz Dance Mix",
+        "Techno-Jazz Swing Rave Anthem",
+        "Festive Art Deco Club Swing",
+        "High-Voltage Cabaret Swing Mix",
+        "Cabaret Jazz for the Club Floor",
+        "Explosive Swing Cabaret Dance",
+        "Theatrical Vintage Swing House Mix",
+        "Art Deco Party Swing Rave Beat",
+        "Sassy Cabaret Electro Swing Mix",
+        "Festive Saloon Swing Club Track",
+        "Chaotic Cabaret Jazz Rave Mix",
+        "Boosted Swing Dance Party Beat",
+        "Vintage Cabaret Club Electro Mix",
+        "Swing Cabaret for the Festival",
+        "Electric Cabaret Jazz Dance Mix",
+        "Dramatic Swing Rave Club Track",
+        "Glam Cabaret Electro Swing Mix",
+        "Retro Theatre Swing Rave Beat",
+    ],
 ]
 
 KPOP_VARIANTS = [
@@ -852,6 +1005,32 @@ KPOP_VARIANTS = [
         "and shimmering synthesizer plucks. Uplifting and nostalgic high school anime opening atmosphere. "
         "Clean, youthful, and sweet male vocals with clear melodic verses, group chants "
         "(\"one, two, three, go!\"), and highly layered, airy harmonies in a triumphant, soaring chorus."
+    ),
+    (
+        "k-pop, High-energy K-pop, electronic dance-pop, modern club anthem. Upbeat 130 BPM, heavy "
+        "driving electronic bass drums, sharp trap hi-hats, intense snapping snares. Deep grooving synth "
+        "basslines, bright futuristic synthesizer plucks, aggressive electronic brass drops. Dynamic female "
+        "vocals featuring fast-paced rhythmic rap verses, alternating with powerful, clean and soaring "
+        "melodic lines leading into a massive, anthemic, multi-layered group-singing pop chorus. Intense, "
+        "empowering, fierce and celebratory mood, hyper-pop aesthetic, explosive cinematic production, "
+        "rich vocal ad-libs."
+    ),
+    (
+        "K-Pop, High-energy dark K-pop, cyberpunk EDM, modern urban club anthem. Upbeat 135 BPM, heavy "
+        "industrial electronic drum beat, sharp trap hi-hats, intense aggressive snare. Deep grinding synth "
+        "basslines, eerie futuristic synthesizer arpeggios, loud electronic brass drops. Mixed gender vocal "
+        "dynamic featuring fast-paced aggressive rap verses and rhythmic urban phrasing, transitioning into "
+        "powerful, soaring and melodic lines that build into a massive, anthemic, multi-layered group-singing "
+        "pop chorus. Intense, fierce, empowering and rebellious mood, hyper-pop aesthetic, explosive "
+        "cinematic production, rich vocal ad-libs."
+    ),
+    (
+        "Cute K-pop, bubblegum pop, upbeat modern synth-pop. Mid-tempo 120 BPM, bouncy electronic drum "
+        "machine beat, crisp rhythmic claps, lively shaker percussion. Bright futuristic synthesizer chords, "
+        "bubbly electronic plucks, grooving funked-up synth bassline. Sweet, crystalline, and sugary-sweet "
+        "female vocals with a playful and airy delivery, rich in cute vocal harmonies. Sparkling and "
+        "ultra-catchy sing-along pop chorus, optimistic, carefree and cheerful mood, colorful radio-friendly "
+        "commercial production, joyful and breezy danceable groove."
     ),
 ]
 
@@ -903,6 +1082,151 @@ POP_VARIANTS = [
         "before exploding. Fierce, confident female vocals delivering spoken-word rhythmic commands, list-like "
         "lyrics, and sharp repetitive punchlines. Pounding club music production with frantic percussion "
         "build-ups, lasers, and a giant, earth-shaking electronic bass drop that demands movement."
+    ),
+    (
+        "2010s Italian pop-rap, summer hit, commercial reggaeton, electronic dance-pop. Upbeat 125 BPM, "
+        "driving 4/4 dembow riddim rhythm, punchy modern kick drums, crisp electronic percussion. Bright "
+        "tropical synth plucks, rhythmic brass-like stabs, rolling synth bassline, polished sidechained "
+        "EDM production. Dynamic arrangement transitioning from energetic, fast-paced rhythmic female rap "
+        "verses into a wide, anthemic, highly melodic female pop chorus. Catchy synth-lead post-chorus drop, "
+        "radio-friendly, high-energy, infectious danceable club groove, sunny celebratory vibe."
+    ),
+    (
+        "2020s Latin pop, commercial reggaeton, urban pop hit. Mid-tempo 105 BPM, steady danceable dembow "
+        "groove, crisp acoustic guitar plucks, syncopated strumming. Polished electronic percussion, warm "
+        "synth bass, subtle brass accents. Duet structure featuring rhythmic, melodic male rap-singing on "
+        "the verses, seamlessly blending into a wide, anthemic, passionate female pop chorus with strong "
+        "vocal harmonies. Uplifting summer festival vibe, radio-friendly production, smooth transitions, "
+        "romantic yet high-energy club atmosphere, catchy synth and guitar hooks."
+    ),
+    (
+        "indie-pop, urban summer hit, groovy acoustic pop. Mid-tempo 110 BPM, bouncy and relaxed drum beat, "
+        "organic electronic percussion, driving melodic bassline. Prominent crisp acoustic guitar strumming, "
+        "bright brass hooks, playful synth accents. Duet dynamic featuring a unique conversational male "
+        "urban indie-singing style with syncopated phrasing, paired with powerful, soulful and raspy female "
+        "pop vocals in the wide, anthemic chorus. Carefree and sunny festival vibe, catchy sing-along "
+        "melodies, optimistic radio-friendly production."
+    ),
+    (
+        "Sophisticated Italian pop, 1970s retro disco-pop, smooth italo-disco. Slow-tempo 95 BPM, relaxed "
+        "retro drum machine beat, steady bass guitar groove. Warm vintage synth pads, nostalgic keyboard "
+        "chords, subtle clean electric guitar plucks. Intimate and smooth duet featuring low, melancholic "
+        "male vocals and crystalline, elegant female pop vocals with lush harmonies. Dreamy and sultry "
+        "atmosphere, nostalgic summer vibe, spacious mix, elegant melodic pop hook, chic radio-friendly "
+        "production."
+    ),
+    (
+        "lo-fi trap, experimental hip-hop, futuristic cloud rap. Mid-tempo 130 BPM, heavy distorted 808 "
+        "basslines, crisp trap hi-hats, snapping snares. Eerie and nostalgic pitch-bent keyboard chords, "
+        "jazzy electric piano plucks, playful synth wobbles. High-pitched and heavily processed male vocals, "
+        "rapid melodic rap-singing, extensive vocal chops used as instruments, heavily autotuned ad-libs. "
+        "Trippy, atmospheric and melancholic mood, spacious soundscape, underground alternative trap "
+        "production, colorful yet dark bedroom pop aesthetic."
+    ),
+    (
+        "teen pop, upbeat urban pop, modern electropop hit. Fast-tempo 125 BPM, bouncy electronic drum beat, "
+        "snapping claps, clean and driving synth bass. Bright and playful synthesizer leads, energetic "
+        "electronic chimes, filtered sound effects. Youthful and melodic male vocals with an intimate, "
+        "casual and rhythmic talk-singing delivery, using light autotune and stuttering vocal chops in the "
+        "pre-chorus. Explosive, ultra-catchy, open and radio-friendly pop chorus. Carefree, sunny, nostalgic "
+        "yet hyper-modern summer festival vibe, infectious danceable commercial production."
+    ),
+    (
+        "Italian folk-pop crossover, modern urban electronic neo-soul, Southern Italian tradition. "
+        "Upbeat 125 BPM, driving 4/4 electronic club beat, deep sub-bass, organic traditional percussion "
+        "like tambourines and shakers. Bright acoustic instruments, playful accordion chords, sharp modern "
+        "synth stabs. Multi-layered dynamic female vocals featuring powerful soulful solo leads, rhythmic "
+        "regional/dialect phrasing, and festive backing choir harmonies mimicking folk street celebrations. "
+        "High-energy, joyful and sunny holiday vibe, rich vocal ad-libs, danceable cultural fusion, "
+        "polished radio-friendly production."
+    ),
+    (
+        "boyband pop, summer hit, commercial latin pop. Upbeat 115 BPM, bouncy syncopated drum machine beat, "
+        "crisp electronic handclaps, smooth rhythmic shaker. Bright acoustic guitar strumming, tropical synth "
+        "plucks, warm acoustic bassline. Dual male vocals featuring smooth, youthful and melodic verses "
+        "leading seamlessly into a highly infectious, open, and anthemic sing-along pop chorus with layered "
+        "harmony vocals. High-energy, optimistic, sunny and carefree beach party vibe, ultra-commercial "
+        "radio-friendly production, clean mix with memorable synth-lead post-chorus hooks."
+    ),
+    (
+        "acoustic folk-pop, cheerful retro pop, sunny organic folk. Mid-tempo 120 BPM, bouncy marching "
+        "acoustic drum beat, crisp rhythmic handclaps, lively percussion. Prominent joyful ukulele plucks, "
+        "bright acoustic guitar strumming, catchy whistling hooks, warm double bass groove. Sweet, "
+        "crystalline, and highly melodic female vocals with a breezy, carefree and youthful storytelling "
+        "delivery. Sunny, optimistic, and heartwarming mood, lively open-air festival vibe, vintage acoustic "
+        "aesthetic, simple and clean acoustic production, joyful melodic sing-along chorus."
+    ),
+]
+
+ROCK_VARIANTS = [
+    (
+        "1990s grunge, alternative rock, post-grunge. Mid-tempo 117 BPM, heavy and aggressive acoustic "
+        "drum kit, powerful crashing cymbals, prominent and fuzzy driving bass guitar line. Distorted "
+        "electric guitar riffs using a distinct loud-quiet-loud dynamic structure. Intimate, clean, and "
+        "nonchalant male vocals in the verses, exploding into a raw, gravelly, screaming and passionate "
+        "delivery in the chaotic anthemic chorus. Gritty, angsty, rebellious and melancholic mood, garage "
+        "band aesthetic, unpolished raw analog production, screaming guitar solo echoing the vocal melody."
+    ),
+    (
+        "1990s hard rock, arena rock, classic heavy metal. Upbeat 133 BPM, powerful metronomic stadium "
+        "drum beat, heavy thumping bass drum, snapping snare. Lightning-fast intricate electric guitar "
+        "tapping intro riff, aggressive distorted rhythm guitar power chords, driving bass guitar. "
+        "High-pitched, raspy, screeching male rock vocals delivered with immense energy. Massive anthemic "
+        "male backing chants and stadium crowd shouts in call-and-response format. Electrifying, "
+        "high-voltage, stadium-sized energy, epic classic rock production, blistering extended electric "
+        "guitar solos, triumphant rock-and-roll attitude."
+    ),
+    (
+        "1970s hard rock, classic rock, blues rock. Mid-tempo 115 BPM, solid steady rock drum groove, "
+        "tight open hi-hats, thumping bass drum, crisp raw snare. Iconic crunchy overdrive guitar chords, "
+        "syncopated rhythm guitar riffs, raw vintage bass guitar line. High-pitched, raspy, charismatic and "
+        "bluesy male rock vocals with a gritty storytelling delivery. Powerful and raw group backing vocals "
+        "shouting the anthemic hook in the chorus. Raw analog vintage production, dry studio acoustics, "
+        "high-energy rebellious attitude, blues-infused blistering electric guitar solos, classic rock and "
+        "roll groove."
+    ),
+    (
+        "1980s heavy metal, New Wave of British Heavy Metal, classic metal. Fast-tempo 175 BPM, galloping "
+        "drum beat, rapid double-bass drum fills, aggressive ride cymbal. Dual harmonized electric guitar "
+        "riffs, intricate melodic guitar solos, loud and clanking energetic bass guitar line. Operatic, "
+        "powerful, and high-pitched melodic male vocals, escalating into theatrical dramatic screams. "
+        "Energetic, intense and driving mood, epic stadium-sized metal production, complex song structure "
+        "shifting from an eerie spoken-word intro into a high-velocity classic rock-and-roll metal groove."
+    ),
+    (
+        "2000s nu metal, alternative metal, groove metal. Mid-tempo 135 BPM, complex heavy acoustic drum "
+        "kit, intense double bass drum blasts, metallic industrial percussion strikes. Down-tuned crushing "
+        "electric guitar riffs, syncopated chugging rhythm guitars, deep rumbling bass guitar. Dual vocal "
+        "dynamics featuring aggressive guttural growls and harsh screamed male vocals in the verses, "
+        "transitioning into a grand, clean, melodic yet powerful anthemic chorus. Dark, intense, chaotic "
+        "and furious mood, thick modern metal production, blistering melodic electric guitar solo, marching "
+        "industrial metal energy."
+    ),
+    (
+        "2000s metalcore, metallic hardcore, beatdown hardcore. Fast-tempo 150 BPM, aggressive raw acoustic "
+        "drums, smashing china cymbals, intense double-bass drum patterns. Ultra-heavy down-tuned electric "
+        "guitars, thick chugging rhythm guitar riffs, massive slow mosh breakdowns. Deep aggressive shouting "
+        "male vocals, rhythmic angry barking delivery, fierce collective group shouting backing vocals for "
+        "call-and-response anthemic hooks. Furious, violent, empowering and high-energy mood, raw underground "
+        "metal production, stomping mosh-pit groove, punishing groove metal weight."
+    ),
+    (
+        "Modern alternative rock, 2020s nu metal, electronic rock. Mid-tempo 125 BPM, driving energetic "
+        "acoustic drum kit, tight punchy snare, deep gritty synth bassline. Heavy distorted electric guitar "
+        "wall-of-sound, dark digital synth textures, dramatic strings. Dual vocal dynamic featuring smooth "
+        "melodic male vocals in the verses, leading into a powerful, raw, raspy and screaming female vocal "
+        "delivery in the massive anthemic chorus. Intense, dark, emotional and high-energy atmosphere, "
+        "explosive cinematic song structure, polished modern rock production, fierce vocal harmonies, "
+        "powerful bridge buildup."
+    ),
+    (
+        "Symphonic power metal, epic heavy metal, cinematic metal. Fast-tempo 145 BPM, thunderous driving "
+        "drum beat, intense double-bass drum patterns, symphonic orchestral percussion. Heavy soaring "
+        "electric guitar riffs, dramatic synth keyboards, majestic orchestral strings, epic brass sections. "
+        "Deep, raspy, baritone male vocals delivered with powerful authority, backed by a massive, booming "
+        "male opera choir singing in a dramatic military march style. Grand, triumphal, and cinematic mood, "
+        "war-themed stadium metal production, soaring melodic guitar solos, heroic and high-energy "
+        "atmosphere."
     ),
 ]
 
@@ -992,6 +1316,12 @@ def generate_text(genre: str, vocal_language: str) -> dict | None:
         )
     elif genre == "pop":
         _preset = random.choice(POP_VARIANTS)
+        genre_hint = (
+            f"\nProduction style (use it for title/lyrics/mood — do NOT put it in caption, "
+            f"just write 'see preset'):\n{_preset}\n"
+        )
+    elif genre == "rock":
+        _preset = random.choice(ROCK_VARIANTS)
         genre_hint = (
             f"\nProduction style (use it for title/lyrics/mood — do NOT put it in caption, "
             f"just write 'see preset'):\n{_preset}\n"
