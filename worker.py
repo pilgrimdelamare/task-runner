@@ -352,27 +352,27 @@ def build_description(title, genre, mood, bpm, key_scale, base_description, tags
 def archive_song(drive, root_folder_id, meta, audio_path, cover_path, video_path):
     genre_folder = get_or_create_folder(drive, meta["genre"], root_folder_id)
     date_folder = get_or_create_folder(drive, str(date.today()), genre_folder)
+    # Prefisso timestamp: evita file omonimi su Drive quando due canzoni
+    # dello stesso genere vengono archiviate nella stessa cartella giornaliera.
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     results = {}
-    for key, path, mime in [
-        ("audio_id", audio_path, "audio/mpeg"),
-        ("cover_id", cover_path, "image/jpeg"),
-        ("video_id", video_path, "video/mp4"),
+    for key, path, mime, rname in [
+        ("audio_id", audio_path, "audio/mpeg",  f"{ts}_audio.mp3"),
+        ("cover_id", cover_path, "image/jpeg",  f"{ts}_cover.jpg"),
+        ("video_id", video_path, "video/mp4",   f"{ts}_output.mp4"),
     ]:
         if path and Path(path).exists():
-            results[key] = upload_file(drive, path, date_folder, mime)
+            results[key] = upload_file(drive, path, date_folder, mime, remote_name=rname)
     meta_json = {
         "title": meta.get("title"), "genre": meta.get("genre"), "mood": meta.get("mood"),
         "bpm": meta.get("bpm"), "key_scale": meta.get("key_scale"), "vocal_language": meta.get("vocal_language"),
         "description": meta.get("description"), "tags": meta.get("tags"), "lyrics": meta.get("lyrics"),
         "youtube_url": meta.get("youtube_url"),
     }
-    tmp = Path("_meta_tmp.json")
-    tmp.write_text(json.dumps(meta_json, ensure_ascii=False, indent=2), encoding="utf-8")
-    results["meta_id"] = upload_file(drive, str(tmp), date_folder, "application/json", remote_name="metadata.json")
-    if video_path and Path(video_path).exists():
-        video_stem = Path(video_path).stem
-        upload_file(drive, str(tmp), date_folder, "application/json", remote_name=f"{video_stem}.json")
-    tmp.unlink(missing_ok=True)
+    # metadata.json: write_json sovrascrive se esiste (fallback per census)
+    write_json(drive, meta_json, "metadata.json", date_folder)
+    # JSON abbinato al video per stem-lookup nel census
+    write_json(drive, meta_json, f"{ts}_output.json", date_folder)
     return results
 
 
