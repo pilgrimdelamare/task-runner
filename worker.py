@@ -369,6 +369,9 @@ def archive_song(drive, root_folder_id, meta, audio_path, cover_path, video_path
     tmp = Path("_meta_tmp.json")
     tmp.write_text(json.dumps(meta_json, ensure_ascii=False, indent=2), encoding="utf-8")
     results["meta_id"] = upload_file(drive, str(tmp), date_folder, "application/json", remote_name="metadata.json")
+    if video_path and Path(video_path).exists():
+        video_stem = Path(video_path).stem
+        upload_file(drive, str(tmp), date_folder, "application/json", remote_name=f"{video_stem}.json")
     tmp.unlink(missing_ok=True)
     return results
 
