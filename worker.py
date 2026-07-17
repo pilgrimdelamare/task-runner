@@ -19,7 +19,7 @@ ACE_MODEL          = "acemusic/acestep-v1.5-turbo"
 ACE_MAX_RETRIES    = 6
 MIN_AUDIO_DURATION = 60
 PLAYLIST_CAP       = 5000
-TIME_BUDGET_S      = 35 * 60
+TIME_BUDGET_S      = 25 * 60
 
 GENRES = [
     {"name": "electro-swing",  "vocal_language": "en", "ace_duration": 190},
@@ -1652,46 +1652,47 @@ def validate_image(img_bytes: bytes) -> tuple:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: list | None = None, dry_run: bool = False):
+    """count = totale canzoni da produrre (round-robin su generi)."""
     genres = [g for g in GENRES if not genre_names or g["name"] in genre_names]
     start  = time.time()
     done, failed = 0, 0
     for i in range(count):
-        for genre_cfg in genres:
-            if time.time() - start > TIME_BUDGET_S:
-                logger.info("budget tempo esaurito")
-                return done, failed, count - i
-            genre = genre_cfg["name"]
-            try:
-                set_progress(drive, root_folder_id, "text", f"Testo — {genre}")
-                logger.info(f"{genre}: genera testo")
-                meta = generate_text(genre, genre_cfg["vocal_language"])
-                if not meta:
-                    failed += 1; continue
-                ok, reason = validate_text(meta)
-                if not ok:
-                    logger.error(f"{genre}: testo non valido ({reason})")
-                    failed += 1; continue
+        if time.time() - start > TIME_BUDGET_S:
+            logger.info("budget tempo esaurito")
+            return done, failed, count - i
+        genre_cfg = genres[i % len(genres)]
+        genre = genre_cfg["name"]
+        try:
+            set_progress(drive, root_folder_id, "text", f"Testo — {genre}")
+            logger.info(f"{genre}: genera testo")
+            meta = generate_text(genre, genre_cfg["vocal_language"])
+            if not meta:
+                failed += 1; continue
+            ok, reason = validate_text(meta)
+            if not ok:
+                logger.error(f"{genre}: testo non valido ({reason})")
+                failed += 1; continue
 
-                set_progress(drive, root_folder_id, "image", f"Immagine — {meta['title']} ({genre})")
-                logger.info(f"{genre}: genera immagine — {meta['title']}")
-                img_bytes = generate_image(genre, meta.get("mood", ""), meta["title"],
-                                           meta.get("image_prompt"))
-                if not img_bytes:
-                    failed += 1; continue
-                ok, reason = validate_image(img_bytes)
-                if not ok:
-                    logger.error(f"{genre}: immagine non valida ({reason})")
-                    failed += 1; continue
+            set_progress(drive, root_folder_id, "image", f"Immagine — {meta['title']} ({genre})")
+            logger.info(f"{genre}: genera immagine — {meta['title']}")
+            img_bytes = generate_image(genre, meta.get("mood", ""), meta["title"],
+                                       meta.get("image_prompt"))
+            if not img_bytes:
+                failed += 1; continue
+            ok, reason = validate_image(img_bytes)
+            if not ok:
+                logger.error(f"{genre}: immagine non valida ({reason})")
+                failed += 1; continue
 
-                meta["genre"]          = genre
-                meta["vocal_language"] = genre_cfg["vocal_language"]
-                item_id = f"cloud_{int(time.time())}_{genre}"
-                process_item(drive, yt, root_folder_id, None, item_id, meta,
-                             cover_bytes=img_bytes, dry_run=dry_run)
-                done += 1
-            except Exception as e:
-                logger.error(f"{genre}: {e}")
-                failed += 1
+            meta["genre"]          = genre
+            meta["vocal_language"] = genre_cfg["vocal_language"]
+            item_id = f"cloud_{int(time.time())}_{genre}"
+            process_item(drive, yt, root_folder_id, None, item_id, meta,
+                         cover_bytes=img_bytes, dry_run=dry_run)
+            done += 1
+        except Exception as e:
+            logger.error(f"{genre}: {e}")
+            failed += 1
     return done, failed, 0
 
 def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta, cover_bytes=None, dry_run=False):
@@ -1806,7 +1807,7 @@ def main():
     yt    = get_youtube_service()
 
     if mode == "full":
-        logger.info(f"Modalità full: {count} canzoni per genere" + (f" ({', '.join(genre_names)})" if genre_names else ""))
+        logger.info(f"Modalità full: {count} canzoni totali" + (f" ({', '.join(genre_names)})" if genre_names else ""))
         done, failed, remaining = full_pipeline_run(drive, yt, root_folder_id, count, genre_names=genre_names, dry_run=dry_run)
         logger.info(f"Pipeline full: {done} ok, {failed} fallite")
         set_progress(drive, root_folder_id, "done", f"Completato: {done} ok, {failed} fallite")
