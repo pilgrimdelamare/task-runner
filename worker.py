@@ -1655,11 +1655,11 @@ def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: l
     genres = [g for g in GENRES if not genre_names or g["name"] in genre_names]
     start  = time.time()
     done, failed = 0, 0
-    for _ in range(count):
+    for i in range(count):
         for genre_cfg in genres:
             if time.time() - start > TIME_BUDGET_S:
                 logger.info("budget tempo esaurito")
-                return done, failed
+                return done, failed, count - i
             genre = genre_cfg["name"]
             try:
                 set_progress(drive, root_folder_id, "text", f"Testo — {genre}")
@@ -1692,7 +1692,7 @@ def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: l
             except Exception as e:
                 logger.error(f"{genre}: {e}")
                 failed += 1
-    return done, failed
+    return done, failed, 0
 
 def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta, cover_bytes=None, dry_run=False):
     genre = meta["genre"]
@@ -1760,7 +1760,7 @@ def process_item(drive, yt, root_folder_id, processing_folder_id, item_id, meta,
 
 
 
-def _redispatch_if_no_stop_flag(root_folder_id: str, genre_names: list | None = None) -> None:
+def _redispatch_if_no_stop_flag(root_folder_id: str, genre_names: list | None = None, count: int = 1, continuous: bool = True) -> None:
     """Re-dispatcha pipeline.yml se stop flag assente su Drive."""
     try:
         from google.oauth2.credentials import Credentials
@@ -1785,7 +1785,8 @@ def _redispatch_if_no_stop_flag(root_folder_id: str, genre_names: list | None = 
         args = ["gh", "workflow", "run", "pipeline.yml",
                 "--repo", "pilgrimdelamare/task-runner",
                 "--field", "mode=full",
-                "--field", "continuous=true"]
+                "--field", f"count={count}",
+                "--field", f"continuous={'true' if continuous else 'false'}"]
         if genre_names:
             args += ["--field", f"genres={','.join(genre_names)}"]
         _sp.run(args, check=True, capture_output=True)
@@ -1806,11 +1807,14 @@ def main():
 
     if mode == "full":
         logger.info(f"Modalità full: {count} canzoni per genere" + (f" ({', '.join(genre_names)})" if genre_names else ""))
-        done, failed = full_pipeline_run(drive, yt, root_folder_id, count, genre_names=genre_names, dry_run=dry_run)
+        done, failed, remaining = full_pipeline_run(drive, yt, root_folder_id, count, genre_names=genre_names, dry_run=dry_run)
         logger.info(f"Pipeline full: {done} ok, {failed} fallite")
         set_progress(drive, root_folder_id, "done", f"Completato: {done} ok, {failed} fallite")
-        if continuous and not dry_run:
-            _redispatch_if_no_stop_flag(root_folder_id, genre_names)
+        if not dry_run:
+            if remaining > 0:
+                _redispatch_if_no_stop_flag(root_folder_id, genre_names, count=remaining, continuous=continuous)
+            elif continuous:
+                _redispatch_if_no_stop_flag(root_folder_id, genre_names, count=count, continuous=True)
         return
 
     # ── Modalità worker (default): processa coda Drive ────────────────────────
