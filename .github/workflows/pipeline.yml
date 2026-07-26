@@ -30,6 +30,10 @@ concurrency:
   group: pipeline-worker
   cancel-in-progress: false
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   worker:
     runs-on: ubuntu-latest
@@ -68,3 +72,4 @@ jobs:
           GH_TOKEN:              ${{ secrets.GITHUB_TOKEN }}
           HF_TOKEN:              ${{ secrets.HF_TOKEN }}
         run: python worker.py
+
