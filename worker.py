@@ -19,7 +19,7 @@ ACE_MODEL          = "acemusic/acestep-v1.5-turbo"
 ACE_MAX_RETRIES    = 6
 MIN_AUDIO_DURATION = 60
 PLAYLIST_CAP       = 5000
-TIME_BUDGET_S      = 25 * 60
+TIME_BUDGET_S      = 34 * 60
 
 GENRES = [
     {"name": "electro-swing",  "vocal_language": "en", "ace_duration": 190},
