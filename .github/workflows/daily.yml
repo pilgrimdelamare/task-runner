@@ -1,0 +1,57 @@
+name: daily
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      count:
+        description: "canzoni totali da generare (round-robin sui generi)"
+        required: false
+        default: "3"
+
+concurrency:
+  group: pipeline-worker
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: setup
+        run: |
+          pip install --quiet google-api-python-client google-auth google-genai gradio-client
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: run
+        env:
+          DRIVE_ROOT_FOLDER_ID:  ${{ secrets.DRIVE_ROOT_FOLDER_ID }}
+          DRIVE_CLIENT_ID:       ${{ secrets.DRIVE_CLIENT_ID }}
+          DRIVE_CLIENT_SECRET:   ${{ secrets.DRIVE_CLIENT_SECRET }}
+          DRIVE_REFRESH_TOKEN:   ${{ secrets.DRIVE_REFRESH_TOKEN }}
+          YT_CLIENT_ID:          ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET:      ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN:      ${{ secrets.YT_REFRESH_TOKEN }}
+          ACE_API_KEY:           ${{ secrets.ACE_API_KEY }}
+          GEMINI_API_KEY:        ${{ secrets.GEMINI_API_KEY }}
+          MODELSCOPE_TOKEN:      ${{ secrets.MODELSCOPE_TOKEN }}
+          CLOUDFLARE_TOKEN:      ${{ secrets.CLOUDFLARE_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          HF_TOKEN:              ${{ secrets.HF_TOKEN }}
+          GH_TOKEN:              ${{ secrets.GITHUB_TOKEN }}
+          PIPELINE_MODE:         full
+          PIPELINE_COUNT:        ${{ github.event.inputs.count || '3' }}
+          PIPELINE_CONTINUOUS:   "false"
+          PIPELINE_DRY_RUN:      "false"
+        run: python worker.py
