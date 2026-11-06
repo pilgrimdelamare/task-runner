@@ -20,6 +20,8 @@ ACE_MAX_RETRIES    = 6
 MIN_AUDIO_DURATION = 60
 PLAYLIST_CAP       = 5000
 TIME_BUDGET_S      = 34 * 60
+RECENT_TITLES_FILE = "_recent_titles.json"   # stato dedup titoli su Drive (per genere)
+RECENT_KEEP        = 30                        # titoli recenti tenuti per genere
 
 GENRES = [
     {"name": "electro-swing",  "vocal_language": "en", "ace_duration": 190},
@@ -126,6 +128,31 @@ def write_json(drive, data, filename, folder_id):
     else:
         meta = {"name": filename, "parents": [folder_id]}
         drive.files().create(body=meta, media_body=media, fields="id").execute()
+
+
+def _norm_title(t: str) -> str:
+    """Normalizza un titolo per il confronto dedup (minuscolo, solo alfanumerico)."""
+    import re
+    return re.sub(r"[^a-z0-9]+", " ", (t or "").lower()).strip()
+
+
+def load_recent_titles(drive, root_folder_id: str) -> dict:
+    """Titoli recenti per genere ({genere: [titoli]}) letti da Drive; {} se assente."""
+    fid = find_file(drive, RECENT_TITLES_FILE, root_folder_id)
+    if not fid:
+        return {}
+    try:
+        data = read_json_file(drive, fid)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def save_recent_titles(drive, root_folder_id: str, recent: dict) -> None:
+    try:
+        write_json(drive, recent, RECENT_TITLES_FILE, root_folder_id)
+    except Exception as e:
+        logger.warning(f"save_recent_titles: {e}")
 
 
 _progress_folder_cache: dict = {}
@@ -1244,7 +1271,7 @@ TEXT_BANNED_WORDS = [
 ]
 
 
-def generate_text(genre: str, vocal_language: str) -> dict | None:
+def generate_text(genre: str, vocal_language: str, recent_titles: list | None = None) -> dict | None:
     """Genera metadati canzone via Gemini. Replicato da agents/text_agent.py."""
     import random, re, json as _json
     try:
@@ -1264,6 +1291,13 @@ def generate_text(genre: str, vocal_language: str) -> dict | None:
         "caption, or description: " + ", ".join(TEXT_BANNED_WORDS) +
         " — find fresh, organic, and unexpected words or imagery.\n"
     )
+    avoid_titles_ctx = ""
+    if recent_titles:
+        _sample = recent_titles[-20:]
+        avoid_titles_ctx = (
+            "\n\nAvoid repeating these recent titles or close variations of them — "
+            "use different words, themes and creative names:\n- " + "\n- ".join(_sample) + "\n"
+        )
     moods_list  = ", ".join(TEXT_MOODS.get(genre, ["upbeat"]))
     image_base  = TEXT_IMAGE_BASE.get(genre, "")
     is_new      = not image_base
@@ -1338,7 +1372,7 @@ def generate_text(genre: str, vocal_language: str) -> dict | None:
         f"- Genre: {genre}\n"
         f"- Available moods: {moods_list}\n"
         f"- BPM: choose between {bpm_min} and {bpm_max}\n"
-        f"{genre_hint}{avoid_ctx}\n"
+        f"{genre_hint}{avoid_ctx}{avoid_titles_ctx}\n"
         f"{image_prompt_instr}\n\n"
         f'JSON structure:\n{{\n'
         f'  "title": "A YouTube-optimized title (max 70 chars). Format: [Emotional Mood or Intended Use-Case] + [Music Style/Vibe] + (Short Creative Title). Examples based on genre: For Rock: \'Aggressive Cyberpunk Rock Beat for Gaming (Shattered Circuits)\'; For Electro-Swing: \'1920s Electro Swing Dance Vibes (Copper Carousel)\'; For Pop: \'Retro Synthwave Pop for Night Drives (Static Heartbeat)\'; For Lofi: \'Cozy Lofi Chillout Beats to Study/Relax (Rainy Window Coffee)\'. Do NOT just return a poetic title. It must contain the musical vibe or use-case first.",\n'
@@ -1363,6 +1397,9 @@ def generate_text(genre: str, vocal_language: str) -> dict | None:
             clean = re.sub(r"^```(?:json)?\n?", "", raw)
             clean = re.sub(r"\n?```$", "", clean).strip()
             data  = _json.loads(clean)
+            if recent_titles and _norm_title(data.get("title", "")) in {_norm_title(t) for t in recent_titles}:
+                logger.warning(f"generate_text [{genre}] titolo duplicato, rigenero: {data.get('title')}")
+                continue
             if _preset:
                 data["caption"] = _preset
             return data
@@ -1654,6 +1691,7 @@ def validate_image(img_bytes: bytes) -> tuple:
 def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: list | None = None, dry_run: bool = False):
     """count = totale canzoni da produrre (round-robin su generi)."""
     genres = [g for g in GENRES if not genre_names or g["name"] in genre_names]
+    recent = load_recent_titles(drive, root_folder_id)
     start  = time.time()
     done, failed = 0, 0
     for i in range(count):
@@ -1665,7 +1703,7 @@ def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: l
         try:
             set_progress(drive, root_folder_id, "text", f"Testo — {genre}")
             logger.info(f"{genre}: genera testo")
-            meta = generate_text(genre, genre_cfg["vocal_language"])
+            meta = generate_text(genre, genre_cfg["vocal_language"], recent_titles=recent.get(genre, []))
             if not meta:
                 failed += 1; continue
             ok, reason = validate_text(meta)
@@ -1690,6 +1728,10 @@ def full_pipeline_run(drive, yt, root_folder_id: str, count: int, genre_names: l
             process_item(drive, yt, root_folder_id, None, item_id, meta,
                          cover_bytes=img_bytes, dry_run=dry_run)
             done += 1
+            recent.setdefault(genre, []).append(meta["title"])
+            recent[genre] = recent[genre][-RECENT_KEEP:]
+            if not dry_run:
+                save_recent_titles(drive, root_folder_id, recent)
         except Exception as e:
             logger.error(f"{genre}: {e}")
             failed += 1
