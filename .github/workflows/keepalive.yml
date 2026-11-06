@@ -1,8 +1,11 @@
 name: keepalive
 on:
   schedule:
-    - cron: "0 12 1 */2 *"
+    - cron: "0 12 1 * *"
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   keepalive:
